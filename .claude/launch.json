@@ -1,0 +1,18 @@
+{
+  "version": "0.0.1",
+  "_note": "preview_start cannot launch Python/FastAPI servers — its sandbox blocks all Python package paths. Run manually: .venv/bin/uvicorn main:app --reload --host 0.0.0.0 --port 8000",
+  "configurations": [
+    {
+      "name": "Camberbrick Green (FastAPI)",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["preview_server.js"],
+      "port": 8000
+    },
+    {
+      "name": "Legacy Next.js prototype",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "port": 3000
+    }
+  ]
+}

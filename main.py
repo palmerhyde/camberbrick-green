@@ -8,6 +8,7 @@ from fastapi.templating import Jinja2Templates
 from contextlib import asynccontextmanager
 
 from database import init_db
+from routers import identify, parts, collection
 
 
 @asynccontextmanager
@@ -22,7 +23,13 @@ app = FastAPI(title="Camberbrick Green", lifespan=lifespan)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
+# ── Routers ────────────────────────────────────────────────────────────────────
+app.include_router(identify.router)
+app.include_router(parts.router)
+app.include_router(collection.router)
 
+
+# ── Page routes ────────────────────────────────────────────────────────────────
 @app.get("/")
 async def scan(request: Request):
     return templates.TemplateResponse("scan.html", {"request": request})
