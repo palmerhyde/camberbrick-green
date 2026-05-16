@@ -1,0 +1,43 @@
+<div class="screen">
+  <header class="header">
+    <a href="/" class="back-btn">←</a>
+    <h1 class="header-title">Which piece is this?</h1>
+  </header>
+
+  <p class="subtitle">Tap the best match below</p>
+
+  <div class="candidate-list">
+    {% for item in items %}
+    <form hx-post="/lookup"
+          hx-target=".shell"
+          hx-swap="innerHTML"
+          hx-indicator="#spinner">
+      <input type="hidden" name="part_id" value="{{ item.id }}">
+      <input type="hidden" name="name"    value="{{ item.name or '' }}">
+      <input type="hidden" name="img_url" value="{{ item.img_url or '' }}">
+      <button type="submit" class="candidate-card">
+        {% if item.img_url %}
+        <img class="candidate-img" src="{{ item.img_url }}" alt="{{ item.name }}" loading="lazy">
+        {% else %}
+        <div class="candidate-img-fallback">🧱</div>
+        {% endif %}
+        <div class="candidate-info">
+          <div class="candidate-id">#{{ item.id }}</div>
+          <div class="candidate-name">{{ item.name or item.id }}</div>
+          {% if item.score is defined and item.score %}
+          <div class="candidate-score">{{ (item.score * 100) | round | int }}% match</div>
+          {% endif %}
+        </div>
+        <span style="color:#ccc; font-size:20px">›</span>
+      </button>
+    </form>
+    {% endfor %}
+  </div>
+
+  <div id="spinner" class="loading-center htmx-indicator">
+    <div class="spinner"></div>
+    <p class="loading-text">Checking your collection…</p>
+  </div>
+
+  <a href="/" class="btn-ghost">None of these — try again</a>
+</div>

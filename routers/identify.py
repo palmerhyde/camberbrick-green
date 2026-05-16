@@ -1,21 +1,31 @@
 """
 POST /identify
 Accepts a multipart image upload, proxies it to Brickognize,
-and returns the top 3 candidate matches.
+and returns the candidates HTML partial (top 3 matches).
 """
 
 import httpx
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, UploadFile, File, Request
+from fastapi.templating import Jinja2Templates
+from fastapi.responses import HTMLResponse
 
 router = APIRouter()
+templates = Jinja2Templates(directory="templates")
 
 BRICKOGNIZE_URL = "https://api.brickognize.com/predict/"
 
 
-@router.post("/identify")
-async def identify(image: UploadFile = File(...)):
-    if not image:
-        raise HTTPException(status_code=400, detail="No image provided")
+def _error(request: Request, message: str) -> HTMLResponse:
+    return templates.TemplateResponse(
+        "partials/_error.html",
+        {"request": request, "message": message},
+    )
+
+
+@router.post("/identify", response_class=HTMLResponse)
+async def identify(request: Request, image: UploadFile = File(...)):
+    if not image or not image.filename:
+        return _error(request, "No image provided — please select a photo.")
 
     image_data = await image.read()
 
@@ -26,20 +36,19 @@ async def identify(image: UploadFile = File(...)):
                 headers={"accept": "application/json"},
                 files={"query_image": (image.filename, image_data, image.content_type)},
             )
-    except httpx.RequestError as e:
-        raise HTTPException(status_code=502, detail=f"Brickognize unreachable: {e}")
+    except httpx.RequestError as exc:
+        return _error(request, f"Could not reach Brickognize — check your connection. ({exc})")
 
     if response.status_code != 200:
-        raise HTTPException(
-            status_code=502,
-            detail=f"Brickognize error {response.status_code}: {response.text}",
-        )
+        return _error(request, f"Brickognize returned an error ({response.status_code}). Try again.")
 
     data = response.json()
-    # Return top 3 candidates so the user can confirm the right match
     items = data.get("items", [])[:3]
 
     if not items:
-        raise HTTPException(status_code=404, detail="No matches found — try a clearer photo")
+        return _error(request, "No matches found — try a clearer photo with better lighting.")
 
-    return {"items": items}
+    return templates.TemplateResponse("partials/_candidates.html", {
+        "request": request,
+        "items":   items,
+    })

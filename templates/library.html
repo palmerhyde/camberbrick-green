@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Library — Camberbrick Green{% endblock %}
+
+{% block content %}
+<div class="screen">
+  <header class="header">
+    <a href="/" class="back-btn">←</a>
+    <h1 class="header-title">Library</h1>
+  </header>
+
+  <p class="subtitle">
+    {{ parts | length }} part{% if parts | length != 1 %}s{% endif %} in your collection
+  </p>
+
+  {% if parts %}
+  <div class="part-list">
+    {% for p in parts %}
+    <div class="part-card">
+      <div style="display:flex; align-items:center; gap:10px; flex:1; min-width:0;">
+        {% if p.img_url %}
+        <img src="{{ p.img_url }}" alt="{{ p.name }}"
+             style="width:44px; height:44px; object-fit:contain; flex-shrink:0; border-radius:6px; background:#f5f5f5;">
+        {% else %}
+        <div style="width:44px; height:44px; display:flex; align-items:center; justify-content:center;
+                    font-size:24px; flex-shrink:0; background:#f5f5f5; border-radius:6px;">🧱</div>
+        {% endif %}
+        <div style="min-width:0;">
+          <div class="part-name" style="font-size:15px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+            {{ p.name or p.part_id }}
+          </div>
+          <div class="part-id">#{{ p.part_id }}</div>
+          {% if p.category %}
+          <div class="part-category" style="font-size:12px; margin-top:2px;">
+            {{ p.category }}{% if p.subcategory %} › {{ p.subcategory }}{% endif %}
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      <div class="part-meta">
+        {% if p.location %}
+        <div class="part-qty">{{ p.location }}</div>
+        <div class="part-location">{{ p.qty or 0 }} pc</div>
+        {% else %}
+        <div class="part-location" style="color:#ccc;">—</div>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty">No parts yet — scan your first piece!</div>
+  {% endif %}
+</div>
+{% endblock %}
