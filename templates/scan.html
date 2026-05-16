@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}Camberbrick Green{% endblock %}
+
+{% block content %}
+<div class="screen">
+  <header class="header">
+    <span class="header-icon">🧱</span>
+    <h1 class="header-title">Camberbrick Green</h1>
+  </header>
+
+  <!-- Photo upload -->
+  <form id="scan-form"
+        hx-post="/identify"
+        hx-target=".shell"
+        hx-swap="innerHTML"
+        hx-encoding="multipart/form-data"
+        hx-indicator="#spinner">
+
+    <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()">
+      <div class="upload-icon">📷</div>
+      <p class="upload-primary">Tap to photograph a piece</p>
+      <p class="upload-secondary">Point camera at the LEGO part</p>
+    </div>
+
+    <img id="preview" class="preview hidden" alt="Preview">
+
+    <input id="file-input"
+           type="file"
+           name="image"
+           accept="image/*"
+           capture="environment"
+           style="display:none"
+           onchange="showPreview(this)">
+
+    <button id="identify-btn" type="submit" class="btn-primary hidden">
+      Identify this piece
+    </button>
+    <button type="button" class="btn-secondary hidden" id="clear-btn" onclick="clearPreview()">
+      Clear
+    </button>
+  </form>
+
+  <!-- Spinner (shown during hx-request) -->
+  <div id="spinner" class="loading-center htmx-indicator">
+    <div class="spinner"></div>
+    <p class="loading-text">Identifying piece…</p>
+    <p class="loading-subtext">Checking Brickognize + your collection</p>
+  </div>
+
+  <div class="divider-row">
+    <span class="divider-line"></span>
+    <span class="divider-text">or</span>
+    <span class="divider-line"></span>
+  </div>
+
+  <!-- Manual entry -->
+  <form hx-post="/lookup"
+        hx-target=".shell"
+        hx-swap="innerHTML"
+        hx-indicator="#spinner">
+    <div class="manual-row">
+      <input class="manual-input" type="text" name="part_id"
+             placeholder="e.g. 3001" autocomplete="off">
+      <button type="submit" class="manual-btn">Look up</button>
+    </div>
+  </form>
+
+  <a href="/library" class="link-btn">Browse your library</a>
+</div>
+
+<script>
+  function showPreview(input) {
+    if (!input.files[0]) return;
+    const url = URL.createObjectURL(input.files[0]);
+    document.getElementById('preview').src = url;
+    document.getElementById('preview').classList.remove('hidden');
+    document.getElementById('upload-zone').classList.add('hidden');
+    document.getElementById('identify-btn').classList.remove('hidden');
+    document.getElementById('clear-btn').classList.remove('hidden');
+  }
+
+  function clearPreview() {
+    document.getElementById('file-input').value = '';
+    document.getElementById('preview').classList.add('hidden');
+    document.getElementById('upload-zone').classList.remove('hidden');
+    document.getElementById('identify-btn').classList.add('hidden');
+    document.getElementById('clear-btn').classList.add('hidden');
+  }
+</script>
+{% endblock %}
