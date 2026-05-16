@@ -1,0 +1,56 @@
+<div class="screen">
+  <header class="header">
+    <a href="/" class="back-btn">←</a>
+    <h1 class="header-title">Camberbrick Green</h1>
+  </header>
+
+  <div class="part-hero">
+    <div class="part-img-box">
+      {% if img_url %}
+      <img class="part-img" src="{{ img_url }}" alt="{{ name }}">
+      {% else %}
+      <span class="part-img-fallback">🧱</span>
+      {% endif %}
+    </div>
+    <div class="part-hero-info">
+      <div class="part-id">#{{ part_id }}</div>
+      <div class="part-name">{{ name }}</div>
+      {% if category %}
+      <div class="part-category">{{ category }}</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="status-new">
+    <div class="status-label">⊕ New part</div>
+    <div class="status-sub">Not in your collection yet</div>
+  </div>
+
+  <form hx-post="/add-part"
+        hx-target=".shell"
+        hx-swap="innerHTML"
+        hx-indicator="#add-spinner">
+    <input type="hidden" name="part_id"  value="{{ part_id }}">
+    <input type="hidden" name="name"     value="{{ name }}">
+    <input type="hidden" name="img_url"  value="{{ img_url or '' }}">
+    <input type="hidden" name="category" value="{{ category or '' }}">
+
+    <label class="field-label" for="location">Storage location</label>
+    <input class="field-input" id="location" name="location"
+           type="text" placeholder="e.g. A3, B7, shoe-box"
+           autocomplete="off" required autofocus>
+
+    <label class="field-label" for="qty">Quantity</label>
+    <input class="field-input" id="qty" name="qty"
+           type="number" placeholder="1" min="1" value="1">
+
+    <button type="submit" class="btn-primary">Add to collection →</button>
+  </form>
+
+  <div id="add-spinner" class="loading-center htmx-indicator">
+    <div class="spinner"></div>
+    <p class="loading-text">Saving…</p>
+  </div>
+
+  <a href="/" class="btn-ghost">Skip</a>
+</div>
