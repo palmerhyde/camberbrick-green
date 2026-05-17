@@ -54,10 +54,10 @@ async def _enrich(part_id: str) -> dict:
 
     rb, ba_cat = await asyncio.gather(_rebrickable(), get_brickarchitect_category(part_id))
 
-    # BrickArchitect category takes priority — it's the physical storage hierarchy
+    # BrickArchitect is the only category system — never fall back to Rebrickable
     return {
         **rb,
-        "category": ba_cat or rb.get("rb_category", ""),
+        "category": ba_cat,
         "brickarchitect_category": ba_cat,
     }
 

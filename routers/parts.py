@@ -65,7 +65,7 @@ async def get_part(part_id: str):
     )
 
     brickarchitect_category = await get_brickarchitect_category(part_id)
-    category = brickarchitect_category or rebrickable_category
+    category = brickarchitect_category  # BrickArchitect only — never fall back to Rebrickable
 
     return {
         "id":                    data.get("part_num", part_id),
