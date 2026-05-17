@@ -5,9 +5,11 @@ A mobile-first LEGO part manager. Photograph a piece to identify it, track where
 ## Features
 
 - **Photo identification** — point your phone camera at a part and Brickognize returns the most likely matches
+- **Minifigure support** — minifigures are automatically detected from the scan and handled separately; browse your full minifigure collection grouped by theme on the dedicated Minifigures page
 - **Collection tracking** — record which storage drawer or bag each part lives in
 - **Inline location editing** — change a part's storage location from its detail page without navigating away
-- **Library** — browse your entire collection by category and subcategory, sourced from BrickArchitect's taxonomy
+- **Parts library** — browse your entire collection by category and subcategory, sourced from BrickArchitect's taxonomy
+- **Uncategorised parts** — parts not found in BrickArchitect's database are collected in a dedicated Uncategorised section so nothing gets lost
 - **Label printing** — one-tap printing to a Brother PT-P710BT (P-Touch Cube Plus) on 24mm tape; labels are auto-patched from BrickArchitect's `.lbx` format
 - **User-friendly names** — prefers BrickArchitect names ("Hammer Small") over the verbose Rebrickable equivalents
 - **Fast navigation** — part metadata is cached on first view; repeat visits are served entirely from the local database
@@ -76,14 +78,18 @@ routers/
   parts.py                     # GET /part/{id} — detail page + metadata cache
   lookup.py                    # Collection lookup, add, inline location update
   collection.py                # Collection read helpers
-  library.py                   # GET /library — category/subcategory browsing
+  library.py                   # GET /parts — category/subcategory browsing
+  minifigures.py               # GET /minifigures + /minifigure/{id} — minifigure browse and detail
   labels.py                    # POST /part/{id}/print-label — fetch, patch, print
   storage.py                   # Storage type management
 
 templates/
   scan.html                    # Home — camera scan page
   part_detail.html             # Part detail with inline location select
-  library*.html                # Library, category, subcategory pages
+  library*.html                # Parts library, category, subcategory pages
+  parts_uncategorised.html     # Parts not found in BrickArchitect
+  minifigures.html             # Minifigure collection grouped by theme
+  minifigure_detail.html       # Minifigure detail with inline location select
   edit_part.html               # (Legacy) full-page location editor
   partials/                    # HTMX response fragments
 
