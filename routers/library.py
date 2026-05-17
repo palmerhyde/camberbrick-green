@@ -137,7 +137,7 @@ async def library_subcategory(request: Request, cat_slug: str, sub_slug: str):
         parts = conn.execute("""
             SELECT
                 p.part_id, p.name, p.img_url,
-                st.code AS storage_code,
+                COALESCE(st.code, l.code) AS storage_code,
                 st.name AS storage_name
             FROM parts p
             JOIN part_categories pc ON p.part_id = pc.part_id

@@ -83,6 +83,19 @@ async def part_detail(request: Request, part_id: str):
     img_url = (part or {}).get("img_url") or rb.get("img_url") or ""
     category = ba_cat  # BrickArchitect only — never Rebrickable
 
+    # Cache img_url into DB if we fetched it from Rebrickable but it's missing locally
+    if img_url and part and not (part or {}).get("img_url"):
+        try:
+            conn2 = get_db()
+            conn2.execute(
+                "UPDATE parts SET img_url = ? WHERE part_id = ?",
+                (img_url, part_id)
+            )
+            conn2.commit()
+            conn2.close()
+        except Exception:
+            pass
+
     category_parts = [p.strip() for p in category.split(" › ")] if category else []
 
     return templates.TemplateResponse("part_detail.html", {

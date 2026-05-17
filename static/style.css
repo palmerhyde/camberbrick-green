@@ -63,7 +63,13 @@ button, input, select, textarea { font-family: inherit; }
   border-bottom: 1px solid #e8e8e8;
   font-size: 13px;
   color: #999;
+  overflow-x: auto;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
 }
+.breadcrumb::-webkit-scrollbar { display: none; }
 .breadcrumb a { color: #555; text-decoration: none; }
 .breadcrumb a:hover { color: #111; text-decoration: underline; }
 .breadcrumb-sep { color: #ccc; font-size: 14px; }
