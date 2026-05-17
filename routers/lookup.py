@@ -296,6 +296,68 @@ async def set_part_location(
     })
 
 
+@router.post("/part/{part_id}/add-overflow", response_class=HTMLResponse)
+async def add_overflow_location(
+    request: Request,
+    part_id: str,
+    location: str = Form(...),
+):
+    conn = get_db()
+    try:
+        part = _get_part_with_location(conn, part_id)
+        if not part:
+            return HTMLResponse(status_code=404)
+        if location:
+            loc_id = _upsert_location(conn, location)
+            conn.execute("""
+                INSERT INTO part_locations (part_id, location_id, role, qty)
+                VALUES (?, ?, 'overflow', 1)
+                ON CONFLICT(part_id, location_id) DO NOTHING
+            """, (part_id, loc_id))
+            conn.commit()
+        part = _get_part_with_location(conn, part_id)
+        storage_types = _get_storage_types(conn)
+    finally:
+        conn.close()
+
+    return templates.TemplateResponse("partials/_location_status.html", {
+        "request":       request,
+        "part_id":       part_id,
+        "part":          part,
+        "storage_types": storage_types,
+    })
+
+
+@router.post("/part/{part_id}/remove-overflow", response_class=HTMLResponse)
+async def remove_overflow_location(
+    request: Request,
+    part_id: str,
+    location: str = Form(...),
+):
+    conn = get_db()
+    try:
+        loc_row = conn.execute(
+            "SELECT id FROM locations WHERE code = ?", (location,)
+        ).fetchone()
+        if loc_row:
+            conn.execute(
+                "DELETE FROM part_locations WHERE part_id = ? AND location_id = ? AND role = 'overflow'",
+                (part_id, loc_row["id"]),
+            )
+            conn.commit()
+        part = _get_part_with_location(conn, part_id)
+        storage_types = _get_storage_types(conn)
+    finally:
+        conn.close()
+
+    return templates.TemplateResponse("partials/_location_status.html", {
+        "request":       request,
+        "part_id":       part_id,
+        "part":          part,
+        "storage_types": storage_types,
+    })
+
+
 @router.get("/part/{part_id}/edit", response_class=HTMLResponse)
 async def edit_part_page(request: Request, part_id: str):
     conn = get_db()

@@ -433,11 +433,54 @@ button, input, select, textarea { font-family: inherit; }
   font-size: 13px;
   color: #888;
 }
-.location-overflow {
+.location-overflow-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 6px;
+}
+.location-overflow-label {
   font-size: 13px;
   color: #aaa;
-  margin-top: 4px;
 }
+.location-overflow-remove {
+  background: none;
+  border: none;
+  color: #ccc;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 2px;
+}
+.location-overflow-remove:hover { color: #999; }
+.location-overflow-add {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+.location-overflow-select {
+  flex: 1;
+  padding: 6px 8px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  background: #fafafa;
+  color: #888;
+  font-size: 13px;
+  font-family: inherit;
+  appearance: auto;
+}
+.location-overflow-select:focus { outline: none; border-color: #bbb; }
+.location-overflow-add-btn {
+  padding: 6px 14px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  background: #fafafa;
+  color: #555;
+  font-size: 16px;
+  font-family: inherit;
+  cursor: pointer;
+}
+.location-overflow-add-btn:hover { background: #f0f0f0; }
 .location-select {
   width: 100%;
   margin-top: 6px;

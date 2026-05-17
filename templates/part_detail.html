@@ -66,11 +66,41 @@
       </option>
       {% endfor %}
     </select>
+
     {% if part.overflow %}
     {% for o in part.overflow %}
-    <div class="location-overflow">Also: {{ o.location }}</div>
+    <div class="location-overflow-row">
+      <span class="location-overflow-label">Also: {{ o.location }}</span>
+      <button class="location-overflow-remove"
+              hx-post="/part/{{ part_id }}/remove-overflow"
+              hx-vals='{"location": "{{ o.location }}"}'
+              hx-target="#status-section"
+              hx-swap="outerHTML"
+              title="Remove overflow location">×</button>
+    </div>
     {% endfor %}
     {% endif %}
+
+    <form class="location-overflow-add"
+          hx-post="/part/{{ part_id }}/add-overflow"
+          hx-target="#status-section"
+          hx-swap="outerHTML"
+          hx-on::after-request="this.reset()">
+      <select name="location" class="location-overflow-select" required>
+        <option value="" disabled selected>Add overflow…</option>
+        {% set primary = part.storage_name or part.location %}
+        {% for st in storage_types %}
+        {% if st.name != primary %}
+        {% set ns = namespace(already=false) %}
+        {% for o in part.overflow %}{% if o.location == st.name %}{% set ns.already = true %}{% endif %}{% endfor %}
+        {% if not ns.already %}
+        <option value="{{ st.name }}">{% if st.code %}{{ st.code }} — {% endif %}{{ st.name }}</option>
+        {% endif %}
+        {% endif %}
+        {% endfor %}
+      </select>
+      <button type="submit" class="location-overflow-add-btn">+</button>
+    </form>
   </div>
   {% if not is_uncategorised %}
   <div class="part-actions">
