@@ -9,6 +9,7 @@ since Rebrickable and BrickArchitect share IDs. Resolution order:
   2. Query Rebrickable API with ?bricklink_id= as a fallback
 """
 
+import asyncio
 import os
 import re
 import httpx
@@ -82,19 +83,15 @@ async def identify(request: Request, image: UploadFile = File(...)):
     if not raw_items:
         return _error(request, "No matches found — try a clearer photo with better lighting.")
 
-    import asyncio
-
     async def _resolve_item(item: dict) -> dict:
         part_id = item.get("id", "")
-        # 1. Try external_sites first (no extra API call)
-        for site in item.get("external_sites", []):
-            if "rebrickable.com" in site.get("url", ""):
-                m = re.search(r"/parts/([^/]+)/?", site["url"])
-                if m:
-                    return {**item, "id": m.group(1)}
-        # 2. Fall back to Rebrickable API lookup by BrickLink ID
-        resolved = await _resolve_rebrickable_id(part_id)
-        return {**item, "id": resolved}
+        # BrickLink variant IDs end with trailing letters (e.g. 11402h, 11402i).
+        # These differ from Rebrickable/BA IDs — resolve via Rebrickable API.
+        # Pure numeric IDs (3001, 85861) are shared across platforms; use as-is.
+        if re.match(r"^\d+[a-z]+$", part_id, re.IGNORECASE):
+            resolved = await _resolve_rebrickable_id(part_id)
+            return {**item, "id": resolved}
+        return item
 
     items = await asyncio.gather(*[_resolve_item(i) for i in raw_items])
 
