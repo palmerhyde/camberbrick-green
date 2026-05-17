@@ -81,22 +81,40 @@
     </form>
   </div>
 
-  {% if featured %}
-  <a href="/minifigure/{{ featured.part_id }}" class="featured-card">
-    <div class="featured-label">{{ featured_label }}</div>
-    <div class="featured-body">
-      {% if featured.img_url %}
-      <img class="featured-img" src="{{ featured.img_url }}" alt="{{ featured.name }}">
-      {% endif %}
-      <div class="featured-info">
-        <div class="featured-name">{{ featured.name }}</div>
-        {% if featured.ba_category %}
-        <div class="featured-theme">{{ featured.ba_category }}</div>
+  {% if featured or latest_part %}
+  <div class="latest-cards">
+    {% if featured %}
+    <a href="/minifigure/{{ featured.part_id }}" class="latest-card">
+      <div class="latest-card-label">{{ featured_label }}</div>
+      <div class="latest-card-body">
+        {% if featured.img_url %}
+        <img class="latest-card-img" src="{{ featured.img_url }}" alt="{{ featured.name }}">
         {% endif %}
-        <div class="featured-id">#{{ featured.part_id }}</div>
+        <div class="latest-card-name">{{ featured.name }}</div>
+        {% if featured.ba_category %}
+        <div class="latest-card-theme">{{ featured.ba_category }}</div>
+        {% endif %}
+        <div class="latest-card-id">#{{ featured.part_id }}</div>
       </div>
-    </div>
-  </a>
+    </a>
+    {% endif %}
+    {% if latest_part %}
+    <a href="/part/{{ latest_part.part_id }}" class="latest-card latest-card--part">
+      <div class="latest-card-label">{{ latest_part_label }}</div>
+      <div class="latest-card-body">
+        <img class="latest-card-img"
+             src="https://brickarchitect.com/content/parts-large/{{ latest_part.part_id }}.png"
+             {% if latest_part.img_url %}onerror="this.src='{{ latest_part.img_url }}';this.onerror=null"{% endif %}
+             alt="{{ latest_part.name }}">
+        <div class="latest-card-name">{{ latest_part.name }}</div>
+        {% if latest_part.ba_category %}
+        <div class="latest-card-theme">{{ latest_part.ba_category }}</div>
+        {% endif %}
+        <div class="latest-card-id">#{{ latest_part.part_id }}</div>
+      </div>
+    </a>
+    {% endif %}
+  </div>
   {% endif %}
 </div>
 

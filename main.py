@@ -121,11 +121,35 @@ async def scan(request: Request):
                 days_ago = 999
             if days_ago < 7:
                 featured = latest
-                featured_label = "Latest addition"
+                featured_label = "Latest Minifig"
             else:
                 rng = random.Random(date.today().toordinal())
                 featured = rng.choice(all_mf)
                 featured_label = "Today's spotlight"
+
+        latest_part = None
+        latest_part_label = None
+        all_parts = conn.execute("""
+            SELECT p.part_id, p.name, p.img_url, p.ba_category, p.updated_at
+            FROM parts p
+            JOIN part_locations pl ON pl.part_id = p.part_id
+            WHERE p.item_type = 'part' OR p.item_type IS NULL
+            ORDER BY p.updated_at DESC
+        """).fetchall()
+        if all_parts:
+            newest_part = all_parts[0]
+            try:
+                added = datetime.fromisoformat(newest_part["updated_at"])
+                days_ago = (datetime.now() - added).days
+            except Exception:
+                days_ago = 999
+            if days_ago < 7:
+                latest_part = newest_part
+                latest_part_label = "Latest Part"
+            else:
+                rng = random.Random(date.today().toordinal() + 1)
+                latest_part = rng.choice(all_parts)
+                latest_part_label = "Today's spotlight"
     finally:
         conn.close()
 
@@ -136,6 +160,8 @@ async def scan(request: Request):
         "locations_count": locations_count,
         "featured":        featured,
         "featured_label":  featured_label,
+        "latest_part":       latest_part,
+        "latest_part_label": latest_part_label,
     })
 
 

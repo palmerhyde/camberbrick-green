@@ -6,6 +6,7 @@ A mobile-first LEGO part manager. Photograph a piece to identify it, track where
 
 - **Photo identification** — point your phone camera at a part and Brickognize returns the most likely matches
 - **Minifigure support** — minifigures are automatically detected from the scan and handled separately; browse your full minifigure collection grouped by theme on the dedicated Minifigures page
+- **Home page cards** — two side-by-side cards show the most recently added minifigure and part; if nothing was added in the last 7 days, each falls back to a daily spotlight (deterministically seeded, stable within a day)
 - **Collection tracking** — record which storage drawer or bag each part lives in
 - **Inline location editing** — change a part's storage location from its detail page without navigating away
 - **Parts library** — browse your entire collection by category and subcategory, sourced from BrickArchitect's taxonomy
