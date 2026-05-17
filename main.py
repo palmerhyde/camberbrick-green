@@ -9,7 +9,7 @@ from fastapi.templating import Jinja2Templates
 from contextlib import asynccontextmanager
 
 from database import init_db, get_all_part_ids, get_db
-from routers import identify, parts, collection, lookup, storage, library
+from routers import identify, parts, collection, lookup, storage, library, labels
 from routers.parts import get_brickarchitect_info
 
 
@@ -74,6 +74,7 @@ app.include_router(collection.router)
 app.include_router(lookup.router)
 app.include_router(storage.router)
 app.include_router(library.router)
+app.include_router(labels.router)
 
 
 # ── Page routes ────────────────────────────────────────────────────────────────

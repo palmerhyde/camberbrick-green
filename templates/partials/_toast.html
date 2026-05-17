@@ -1,0 +1,4 @@
+<div id="toast-msg" class="toast {% if error %}toast--error{% else %}toast--success{% endif %}">
+  {{ message }}
+</div>
+<script>setTimeout(function(){ var t = document.getElementById('toast-msg'); if(t) t.remove(); }, 3000);</script>

@@ -82,6 +82,18 @@
   </div>
   {% endif %}
 
+  <div class="print-label-section">
+    <div id="print-toast"></div>
+    <button class="btn-print"
+            hx-post="/part/{{ part_id }}/print-label"
+            hx-target="#print-toast"
+            hx-swap="innerHTML"
+            hx-indicator="#print-spinner">
+      <span id="print-spinner" class="htmx-indicator">⏳</span>
+      🖨 Print Label
+    </button>
+  </div>
+
   <div class="ext-links-section">
     <a href="https://www.bricklink.com/v2/catalog/catalogitem.page?P={{ part_id }}"
        class="ext-link-pill" target="_blank" rel="noopener">BrickLink</a>
