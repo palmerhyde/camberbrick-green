@@ -19,12 +19,18 @@ def _slugify(s: str) -> str:
 
 
 def _display_name(name: str, subcategory: str) -> str:
-    """Strip redundant subcategory prefix, e.g. 'Brick 1 x 2' → '1 x 2' under Brick."""
+    """Strip redundant subcategory label from name when shown under that subcategory.
+    Handles both prefix ('Brick 1×2' → '1×2') and suffix ('1×2 Brick' → '1×2')."""
     if not name:
         return ""
-    prefix = subcategory.lower()
-    if name.lower().startswith(prefix):
-        stripped = name[len(prefix):].strip()
+    sub = subcategory.lower()
+    lower = name.lower()
+    if lower.startswith(sub):
+        stripped = name[len(sub):].strip().lstrip(",").strip()
+        if stripped:
+            return stripped
+    if lower.endswith(sub):
+        stripped = name[: -len(sub)].strip().rstrip(",").strip()
         if stripped:
             return stripped
     return name
