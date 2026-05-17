@@ -170,7 +170,7 @@ async def part_detail(request: Request, part_id: str):
         "category_parts":   category_parts,
         "category_slugs":   category_slugs,
         "part":             part,
-        "in_collection":    part is not None,
+        "in_collection":    part is not None and part.get("location") is not None,
         "storage_types":    storage_types,
         "is_uncategorised": is_uncategorised,
     })
