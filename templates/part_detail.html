@@ -18,11 +18,10 @@
   </div>
 
   <div class="part-hero">
-    {% if img_url %}
-    <img class="part-hero-img" src="{{ img_url }}" alt="{{ name }}">
-    {% else %}
-    <div class="part-hero-img-fallback">🧱</div>
-    {% endif %}
+    <img class="part-hero-img"
+         src="https://brickarchitect.com/content/parts-large/{{ part_id }}.png"
+         alt="{{ name }}"
+         onerror="this.src='{{ img_url or '' }}';this.onerror=null">
     <div class="part-number">Part #{{ part_id }}</div>
     <div class="part-title">{{ name or part_id }}</div>
     {% if category %}

@@ -8,20 +8,29 @@
   </div>
 
   <div class="breadcrumb">
-    <a href="/">Home</a>
-    <span class="breadcrumb-sep">›</span>
     <a href="/library">Library</a>
+    {% if part.ba_category %}
+      {% for cp in part.ba_category.split(' › ') %}
+      <span class="breadcrumb-sep">›</span>
+      <span>{{ cp }}</span>
+      {% endfor %}
+    {% elif part.category %}
+      <span class="breadcrumb-sep">›</span>
+      <span>{{ part.category }}</span>
+      {% if part.subcategory %}
+      <span class="breadcrumb-sep">›</span>
+      <span>{{ part.subcategory }}</span>
+      {% endif %}
+    {% endif %}
     <span class="breadcrumb-sep">›</span>
-    <span class="breadcrumb-current">Edit part</span>
+    <span class="breadcrumb-current">{{ part.name or part.part_id }}</span>
   </div>
 
-  <!-- Part summary -->
   <div class="part-hero">
-    {% if part.img_url %}
-    <img class="part-hero-img" src="{{ part.img_url }}" alt="{{ part.name }}">
-    {% else %}
-    <div class="part-hero-img-fallback">🧱</div>
-    {% endif %}
+    <img class="part-hero-img"
+         src="https://brickarchitect.com/content/parts-large/{{ part.part_id }}.png"
+         alt="{{ part.name }}"
+         onerror="this.src='{{ part.img_url or '' }}';this.onerror=null">
     <div class="part-number">Part #{{ part.part_id }}</div>
     <div class="part-title">{{ part.name or part.part_id }}</div>
     {% if part.ba_category %}
@@ -58,7 +67,16 @@
       <button type="submit" class="btn-primary">Save changes</button>
     </form>
 
-    <a href="/library" class="btn-ghost">Cancel</a>
+    <a href="/part/{{ part.part_id }}" class="btn-ghost">Cancel</a>
+  </div>
+
+  <div class="ext-links-section">
+    <a href="https://www.bricklink.com/v2/catalog/catalogitem.page?P={{ part.part_id }}"
+       class="ext-link-pill" target="_blank" rel="noopener">BrickLink</a>
+    <a href="https://rebrickable.com/parts/{{ part.part_id }}/"
+       class="ext-link-pill" target="_blank" rel="noopener">Rebrickable</a>
+    <a href="https://brickarchitect.com/parts/{{ part.part_id }}"
+       class="ext-link-pill" target="_blank" rel="noopener">BrickArchitect</a>
   </div>
 </div>
 {% endblock %}

@@ -43,7 +43,7 @@
 
       <div class="part-scale-view">
         {% for p in group.parts %}
-        <a href="/part/{{ p.part_id }}/edit" class="part-scale-card">
+        <a href="/part/{{ p.part_id }}" class="part-scale-card">
           <img class="part-scale-img"
                src="https://brickarchitect.com/content/cache/parts/normal/50/{{ p.part_id }}.png"
                alt="{{ p.name or p.part_id }}"
@@ -51,8 +51,8 @@
                onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
           <span class="part-scale-fallback" style="display:none">🧱</span>
           <div class="part-scale-label">
-            {% if p.name and p.name != p.part_id %}
-            <div class="part-scale-name">{{ p.name }}</div>
+            {% if p.display_name %}
+            <div class="part-scale-name">{{ p.display_name }}</div>
             {% endif %}
             <div class="part-scale-num">#{{ p.part_id }}{% if p.storage_code %} · {{ p.storage_code }}{% endif %}</div>
           </div>

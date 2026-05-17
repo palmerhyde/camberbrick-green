@@ -18,6 +18,18 @@ def _slugify(s: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", s.lower()).strip("-")
 
 
+def _display_name(name: str, subcategory: str) -> str:
+    """Strip redundant subcategory prefix, e.g. 'Brick 1 x 2' → '1 x 2' under Brick."""
+    if not name:
+        return ""
+    prefix = subcategory.lower()
+    if name.lower().startswith(prefix):
+        stripped = name[len(prefix):].strip()
+        if stripped:
+            return stripped
+    return name
+
+
 def _size_sort_key(part: dict) -> tuple:
     """Sort key that extracts stud dimensions from names like 'Brick 1 x 4'.
     Returns (longest_dim, shortest_dim, name) so 1×2 < 1×4 < 2×4 < 2×6."""
@@ -124,7 +136,9 @@ async def library_category(request: Request, cat_slug: str):
             sections[sub][grp] = []
             group_order[sub].append(grp)
 
-        sections[sub][grp].append(dict(row))
+        p = dict(row)
+        p["display_name"] = _display_name(p.get("name") or "", sub)
+        sections[sub][grp].append(p)
 
     # Sort parts within each group by physical size
     for sub in sections:
