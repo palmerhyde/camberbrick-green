@@ -19,8 +19,17 @@
   </div>
 
   {% if grouped %}
+  <div class="jump-to">
+    <span class="jump-to-label">Jump to</span>
+    <div class="jump-to-links">
+      {% for group in grouped %}
+      <a href="#{{ group.theme | lower | replace(' ', '-') }}" class="jump-to-link">{{ group.theme }} ({{ group.figures | length }})</a>
+      {% endfor %}
+    </div>
+  </div>
+
     {% for group in grouped %}
-    <div class="mf-theme-section">
+    <div class="mf-theme-section" id="{{ group.theme | lower | replace(' ', '-') }}">
       <div class="mf-theme-header">
         <span class="mf-theme-name">{{ group.theme }}</span>
         <span class="mf-theme-count">{{ group.figures | length }}</span>

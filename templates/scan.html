@@ -12,6 +12,23 @@
     </div>
   </div>
 
+  <div class="stats-strip">
+    <a href="/parts" class="stat-card">
+      <div class="stat-number">{{ parts_count }}</div>
+      <div class="stat-label">Parts</div>
+    </a>
+    <div class="stat-divider"></div>
+    <a href="/minifigures" class="stat-card">
+      <div class="stat-number">{{ minifig_count }}</div>
+      <div class="stat-label">Minifigures</div>
+    </a>
+    <div class="stat-divider"></div>
+    <a href="/storage" class="stat-card">
+      <div class="stat-number">{{ locations_count }}</div>
+      <div class="stat-label">Locations</div>
+    </a>
+  </div>
+
   <div class="page-content">
     <!-- Photo upload -->
     <form id="scan-form"

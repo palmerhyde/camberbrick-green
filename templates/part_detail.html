@@ -8,18 +8,18 @@
   </div>
 
   <div class="breadcrumb">
+    <a href="/">Home</a>
+    <span class="breadcrumb-sep">›</span>
     <a href="/parts">Parts</a>
     {% if is_uncategorised %}
     <span class="breadcrumb-sep">›</span>
-    <a href="/parts/uncategorised">Uncategorised</a>
+    <span class="breadcrumb-current"><a href="/parts/uncategorised">Uncategorised</a></span>
     {% else %}
     {% for cp in category_parts %}
     <span class="breadcrumb-sep">›</span>
-    <span>{{ cp }}</span>
+    <span {% if loop.last %}class="breadcrumb-current"{% endif %}>{{ cp }}</span>
     {% endfor %}
     {% endif %}
-    <span class="breadcrumb-sep">›</span>
-    <span class="breadcrumb-current">{{ name or part_id }}</span>
   </div>
 
   <div class="part-hero">

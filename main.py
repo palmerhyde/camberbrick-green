@@ -82,7 +82,29 @@ app.include_router(minifigures.router)
 # ── Page routes ────────────────────────────────────────────────────────────────
 @app.get("/")
 async def scan(request: Request):
-    return templates.TemplateResponse("scan.html", {"request": request})
+    conn = get_db()
+    try:
+        parts_count = conn.execute("""
+            SELECT COUNT(DISTINCT p.part_id) FROM parts p
+            JOIN part_locations pl ON pl.part_id = p.part_id
+            WHERE p.item_type = 'part' OR p.item_type IS NULL
+        """).fetchone()[0]
+        minifig_count = conn.execute("""
+            SELECT COUNT(DISTINCT p.part_id) FROM parts p
+            JOIN part_locations pl ON pl.part_id = p.part_id
+            WHERE p.item_type = 'minifig'
+        """).fetchone()[0]
+        locations_count = conn.execute(
+            "SELECT COUNT(*) FROM storage_types"
+        ).fetchone()[0]
+    finally:
+        conn.close()
+    return templates.TemplateResponse("scan.html", {
+        "request":        request,
+        "parts_count":    parts_count,
+        "minifig_count":  minifig_count,
+        "locations_count": locations_count,
+    })
 
 
 

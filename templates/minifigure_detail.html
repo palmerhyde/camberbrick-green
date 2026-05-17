@@ -8,13 +8,13 @@
   </div>
 
   <div class="breadcrumb">
+    <a href="/">Home</a>
+    <span class="breadcrumb-sep">›</span>
     <a href="/minifigures">Minifigures</a>
     {% if theme %}
     <span class="breadcrumb-sep">›</span>
-    <span>{{ theme }}</span>
+    <a href="/minifigures#{{ theme | lower | replace(' ', '-') }}" class="breadcrumb-current">{{ theme }}</a>
     {% endif %}
-    <span class="breadcrumb-sep">›</span>
-    <span class="breadcrumb-current">{{ name }}</span>
   </div>
 
   <div class="part-hero">
