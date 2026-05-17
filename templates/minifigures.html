@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Minifigures — Camberbrick Green{% endblock %}
+
+{% block content %}
+<div class="screen">
+  <div class="site-header">
+    <span class="site-name"><svg class="roundel" viewBox="0 0 20 20" aria-hidden="true"><rect x="1" y="7.8" width="18" height="4.8" fill="#003688"/><circle cx="10" cy="10" r="8.5" fill="none" stroke="#DC241F" stroke-width="3"/></svg> Camberbrick Green</span>
+  </div>
+
+  <div class="breadcrumb">
+    <a href="/">Home</a>
+    <span class="breadcrumb-sep">›</span>
+    <span class="breadcrumb-current">Minifigures</span>
+  </div>
+
+  <div class="page-header">
+    <div class="page-title">Minifigures</div>
+    <div class="page-subtitle">{{ total }} figure{{ 's' if total != 1 else '' }} in Camberbrick Green</div>
+  </div>
+
+  {% if grouped %}
+    {% for group in grouped %}
+    <div class="mf-theme-section">
+      <div class="mf-theme-header">
+        <span class="mf-theme-name">{{ group.theme }}</span>
+        <span class="mf-theme-count">{{ group.figures | length }}</span>
+      </div>
+      <div class="part-grid">
+        {% for fig in group.figures %}
+        <a href="/minifigure/{{ fig.part_id }}" class="part-grid-card">
+          <div class="part-grid-img-wrap">
+            {% if fig.img_url %}
+            <img class="part-grid-img" src="{{ fig.img_url }}" alt="{{ fig.name }}" loading="lazy">
+            {% else %}
+            <span class="part-grid-img-fallback">🧍</span>
+            {% endif %}
+            {% if fig.storage_code %}
+            <span class="part-grid-storage">{{ fig.storage_code }}</span>
+            {% endif %}
+          </div>
+          <div class="part-grid-num">#{{ fig.part_id }}</div>
+          <div class="part-grid-name">{{ fig.name or fig.part_id }}</div>
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-state-icon">🧍</div>
+    <div class="empty-state-title">No minifigures yet</div>
+    <div class="empty-state-text">Scan a minifigure from the home screen to add it to your collection.</div>
+    <a href="/" class="btn-primary" style="margin-top: 1.5rem;">Scan a figure</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

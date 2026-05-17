@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}{{ sub_name }} — {{ cat_name }} — Camberbrick Green{% endblock %}
+{% block title %}Uncategorised — Parts — Camberbrick Green{% endblock %}
 
 {% block content %}
 <div class="screen">
@@ -8,21 +8,15 @@
   </div>
 
   <div class="breadcrumb">
-    <a href="/">Home</a>
-    <span class="breadcrumb-sep">›</span>
     <a href="/parts">Parts</a>
     <span class="breadcrumb-sep">›</span>
-    <a href="/parts/{{ cat_slug }}">{{ cat_name }}</a>
-    <span class="breadcrumb-sep">›</span>
-    <span class="breadcrumb-current">{{ sub_name }}</span>
+    <span class="breadcrumb-current">Uncategorised</span>
   </div>
 
   <div class="page-header">
-    <div class="page-title">{{ sub_name }}</div>
+    <div class="page-title">Uncategorised</div>
     <div class="page-subtitle">
-      {% if parts | length == 1 %}1 part
-      {% elif parts | length > 1 %}{{ parts | length }} parts
-      {% else %}No parts yet{% endif %}
+      {{ total }} part{{ 's' if total != 1 else '' }} not found in BrickArchitect
     </div>
   </div>
 
@@ -44,11 +38,6 @@
       <div class="part-grid-name">{{ p.name or p.part_id }}</div>
     </a>
     {% endfor %}
-  </div>
-  {% else %}
-  <div class="empty-state">
-    No parts in this subcategory yet.<br>
-    Scan a piece and assign it here.
   </div>
   {% endif %}
 </div>

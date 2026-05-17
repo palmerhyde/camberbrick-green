@@ -1,0 +1,19 @@
+<div class="status-section" id="status-section">
+  <div class="status-badge">✓ In your collection</div>
+  {% if part.location %}
+  <div class="location-code">{{ part.storage_code or part.location }}</div>
+  {% endif %}
+  <select class="location-select"
+          name="location"
+          hx-post="/minifigure/{{ part_id }}/set-location"
+          hx-trigger="change"
+          hx-target="#status-section"
+          hx-swap="outerHTML">
+    {% for st in storage_types %}
+    <option value="{{ st.name }}"
+      {% if part.storage_name == st.name or part.location == st.name %}selected{% endif %}>
+      {% if st.code %}{{ st.code }} — {% endif %}{{ st.name }}
+    </option>
+    {% endfor %}
+  </select>
+</div>

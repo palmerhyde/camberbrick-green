@@ -1,6 +1,6 @@
 <div class="screen">
   <div class="site-header">
-    <span class="site-name">🧱 Camberbrick Green</span>
+    <span class="site-name"><svg class="roundel" viewBox="0 0 20 20" aria-hidden="true"><rect x="1" y="7.8" width="18" height="4.8" fill="#003688"/><circle cx="10" cy="10" r="8.5" fill="none" stroke="#DC241F" stroke-width="3"/></svg> Camberbrick Green</span>
   </div>
 
   <div class="breadcrumb">
@@ -20,9 +20,11 @@
           hx-target=".shell"
           hx-swap="innerHTML"
           hx-indicator="#spinner">
-      <input type="hidden" name="part_id" value="{{ item.id }}">
-      <input type="hidden" name="name"    value="{{ item.name or '' }}">
-      <input type="hidden" name="img_url" value="{{ item.img_url or '' }}">
+      <input type="hidden" name="part_id"   value="{{ item.id }}">
+      <input type="hidden" name="name"      value="{{ item.name or '' }}">
+      <input type="hidden" name="img_url"   value="{{ item.img_url or '' }}">
+      <input type="hidden" name="item_type" value="{{ item.item_type or 'part' }}">
+      <input type="hidden" name="category"  value="{{ item.category or '' }}">
       <button type="submit" class="candidate-card">
         {% if item.img_url %}
         <img class="candidate-img" src="{{ item.img_url }}" alt="{{ item.name }}" loading="lazy">

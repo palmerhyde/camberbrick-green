@@ -1,9 +1,9 @@
 """
 Library browse routes — Category → Parts (BA-style grouped page).
 
-GET /library                       → 12 BA category tiles with owned-part counts
-GET /library/{cat_slug}            → all parts in category, grouped by subcategory then group
-GET /library/{cat_slug}/{sub_slug} → redirects to category page (old URL compat)
+GET /parts                       → 12 BA category tiles with owned-part counts
+GET /parts/{cat_slug}            → all parts in category, grouped by subcategory then group
+GET /parts/{cat_slug}/{sub_slug} → redirects to category page (old URL compat)
 """
 
 import re
@@ -67,7 +67,7 @@ BA_CATEGORIES = [
 SLUG_TO_NAME = {slug: name for slug, name in BA_CATEGORIES}
 
 
-@router.get("/library", response_class=HTMLResponse)
+@router.get("/parts", response_class=HTMLResponse)
 async def library_index(request: Request):
     conn = get_db()
     try:
@@ -78,6 +78,13 @@ async def library_index(request: Request):
             GROUP BY c.id
         """).fetchall()
         counts = {r["name"]: r["count"] for r in rows}
+
+        uncategorised_count = conn.execute("""
+            SELECT COUNT(*) FROM parts p
+            LEFT JOIN part_categories pc ON p.part_id = pc.part_id
+            WHERE pc.part_id IS NULL
+              AND (p.item_type = 'part' OR p.item_type IS NULL)
+        """).fetchone()[0]
     finally:
         conn.close()
 
@@ -86,12 +93,40 @@ async def library_index(request: Request):
         for slug, name in BA_CATEGORIES
     ]
     return templates.TemplateResponse("library.html", {
-        "request":    request,
-        "categories": categories,
+        "request":            request,
+        "categories":         categories,
+        "uncategorised_count": uncategorised_count,
     })
 
 
-@router.get("/library/{cat_slug}", response_class=HTMLResponse)
+@router.get("/parts/uncategorised", response_class=HTMLResponse)
+async def parts_uncategorised(request: Request):
+    conn = get_db()
+    try:
+        parts = conn.execute("""
+            SELECT
+                p.part_id, p.name, p.img_url,
+                COALESCE(st.code, l.code) AS storage_code
+            FROM parts p
+            LEFT JOIN part_categories pc ON p.part_id = pc.part_id
+            LEFT JOIN part_locations pl  ON p.part_id = pl.part_id AND pl.role = 'primary'
+            LEFT JOIN locations l        ON pl.location_id = l.id
+            LEFT JOIN storage_types st   ON l.storage_type_id = st.id
+            WHERE pc.part_id IS NULL
+              AND (p.item_type = 'part' OR p.item_type IS NULL)
+            ORDER BY p.name, p.part_id
+        """).fetchall()
+    finally:
+        conn.close()
+
+    return templates.TemplateResponse("parts_uncategorised.html", {
+        "request": request,
+        "parts":   [dict(p) for p in parts],
+        "total":   len(parts),
+    })
+
+
+@router.get("/parts/{cat_slug}", response_class=HTMLResponse)
 async def library_category(request: Request, cat_slug: str):
     cat_name = SLUG_TO_NAME.get(cat_slug)
     if not cat_name:
@@ -119,6 +154,7 @@ async def library_category(request: Request, cat_slug: str):
             LEFT JOIN locations l       ON pl.location_id = l.id
             LEFT JOIN storage_types st  ON l.storage_type_id = st.id
             WHERE pc.category_id = ?
+              AND (p.item_type = 'part' OR p.item_type IS NULL)
             ORDER BY sc.name, COALESCE(pc.group_name, ''), p.name
         """, (cat_id,)).fetchall()
     finally:
@@ -174,6 +210,6 @@ async def library_category(request: Request, cat_slug: str):
     })
 
 
-@router.get("/library/{cat_slug}/{sub_slug}", response_class=HTMLResponse)
+@router.get("/parts/{cat_slug}/{sub_slug}", response_class=HTMLResponse)
 async def library_subcategory_redirect(request: Request, cat_slug: str, sub_slug: str):
-    return RedirectResponse(f"/library/{cat_slug}", status_code=301)
+    return RedirectResponse(f"/parts/{cat_slug}", status_code=301)

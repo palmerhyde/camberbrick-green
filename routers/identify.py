@@ -83,15 +83,35 @@ async def identify(request: Request, image: UploadFile = File(...)):
     if not raw_items:
         return _error(request, "No matches found — try a clearer photo with better lighting.")
 
+    def _is_minifig(item: dict) -> bool:
+        """Detect minifigures using two independent signals:
+        1. Brickognize type field contains 'minifig' (handles Minifig, minifigure, etc.)
+        2. ID pattern: starts with 2+ letters then digits (hp324, sw001, col042, etc.)
+           Regular parts are numeric (3001) or numeric+trailing-letter (11402h).
+        """
+        type_field = (item.get("type") or "").lower()
+        if "minifig" in type_field:
+            return True
+        part_id = item.get("id", "")
+        if re.match(r"^[a-zA-Z]{2,}\d", part_id):
+            return True
+        return False
+
     async def _resolve_item(item: dict) -> dict:
         part_id = item.get("id", "")
+
+        # Minifigure IDs (e.g. hp324, sw001) — keep as-is, no Rebrickable resolution
+        if _is_minifig(item):
+            return {**item, "item_type": "minifig"}
+
         # BrickLink variant IDs end with trailing letters (e.g. 11402h, 11402i).
         # These differ from Rebrickable/BA IDs — resolve via Rebrickable API.
         # Pure numeric IDs (3001, 85861) are shared across platforms; use as-is.
         if re.match(r"^\d+[a-z]+$", part_id, re.IGNORECASE):
             resolved = await _resolve_rebrickable_id(part_id)
-            return {**item, "id": resolved}
-        return item
+            return {**item, "id": resolved, "item_type": "part"}
+
+        return {**item, "item_type": "part"}
 
     items = await asyncio.gather(*[_resolve_item(i) for i in raw_items])
 

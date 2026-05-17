@@ -94,6 +94,14 @@ def init_db() -> None:
     p_cols = [r[1] for r in conn.execute("PRAGMA table_info(parts)").fetchall()]
     if "ba_category" not in p_cols:
         conn.execute("ALTER TABLE parts ADD COLUMN ba_category TEXT")
+    if "item_type" not in p_cols:
+        conn.execute("ALTER TABLE parts ADD COLUMN item_type TEXT DEFAULT 'part'")
+        # Backfill: IDs that start with letters then digits are BrickLink minifig IDs
+        conn.execute("""
+            UPDATE parts SET item_type = 'minifig'
+            WHERE part_id GLOB '[a-zA-Z]*[0-9]*'
+              AND part_id NOT GLOB '[0-9]*'
+        """)
 
     # Migrate part_categories if group_name column is missing (3rd BA level)
     pc_cols = [r[1] for r in conn.execute("PRAGMA table_info(part_categories)").fetchall()]
@@ -207,10 +215,12 @@ def get_parts_missing_ba_category() -> list[str]:
 
 
 def get_all_part_ids() -> list[str]:
-    """Return all part_ids in the collection."""
+    """Return part_ids for regular parts only (excludes minifigures)."""
     conn = get_db()
     try:
-        rows = conn.execute("SELECT part_id FROM parts").fetchall()
+        rows = conn.execute(
+            "SELECT part_id FROM parts WHERE item_type = 'part' OR item_type IS NULL"
+        ).fetchall()
         return [r["part_id"] for r in rows]
     finally:
         conn.close()

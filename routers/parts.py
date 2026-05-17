@@ -90,6 +90,10 @@ async def part_detail(request: Request, part_id: str):
     cached_img  = (part or {}).get("img_url")
     cached_cat  = (part or {}).get("ba_category")
 
+    # Treat name == part_id as "no useful name" — raw ID was stored as placeholder
+    if cached_name == part_id:
+        cached_name = None
+
     # Skip external calls if everything we need is already cached in the DB
     if cached_name and cached_cat:
         rb, ba_name, ba_cat = {}, "", ""
@@ -113,10 +117,11 @@ async def part_detail(request: Request, part_id: str):
                     "UPDATE parts SET img_url = ? WHERE part_id = ?",
                     (img_url, part_id)
                 )
-            if ba_name and not (part or {}).get("name"):
+            best_name = ba_name or rb.get("name")
+            if best_name and not cached_name:
                 conn2.execute(
                     "UPDATE parts SET name = ? WHERE part_id = ?",
-                    (ba_name, part_id)
+                    (best_name, part_id)
                 )
             if ba_cat and not (part or {}).get("ba_category"):
                 conn2.execute(
@@ -153,15 +158,17 @@ async def part_detail(request: Request, part_id: str):
             pass
 
     category_parts = [p.strip() for p in category.split(" › ")] if category else []
+    is_uncategorised = not bool(category)
 
     return templates.TemplateResponse("part_detail.html", {
-        "request":        request,
-        "part_id":        part_id,
-        "name":           name,
-        "img_url":        img_url,
-        "category":       category,
-        "category_parts": category_parts,
-        "part":           part,
-        "in_collection":  part is not None,
-        "storage_types":  storage_types,
+        "request":          request,
+        "part_id":          part_id,
+        "name":             name,
+        "img_url":          img_url,
+        "category":         category,
+        "category_parts":   category_parts,
+        "part":             part,
+        "in_collection":    part is not None,
+        "storage_types":    storage_types,
+        "is_uncategorised": is_uncategorised,
     })

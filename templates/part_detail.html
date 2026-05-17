@@ -4,24 +4,33 @@
 {% block content %}
 <div class="screen">
   <div class="site-header">
-    <span class="site-name">🧱 Camberbrick Green</span>
+    <span class="site-name"><svg class="roundel" viewBox="0 0 20 20" aria-hidden="true"><rect x="1" y="7.8" width="18" height="4.8" fill="#003688"/><circle cx="10" cy="10" r="8.5" fill="none" stroke="#DC241F" stroke-width="3"/></svg> Camberbrick Green</span>
   </div>
 
   <div class="breadcrumb">
-    <a href="/library">Library</a>
+    <a href="/parts">Parts</a>
+    {% if is_uncategorised %}
+    <span class="breadcrumb-sep">›</span>
+    <a href="/parts/uncategorised">Uncategorised</a>
+    {% else %}
     {% for cp in category_parts %}
     <span class="breadcrumb-sep">›</span>
     <span>{{ cp }}</span>
     {% endfor %}
+    {% endif %}
     <span class="breadcrumb-sep">›</span>
     <span class="breadcrumb-current">{{ name or part_id }}</span>
   </div>
 
   <div class="part-hero">
+    {% if is_uncategorised and img_url %}
+    <img class="part-hero-img" src="{{ img_url }}" alt="{{ name }}">
+    {% else %}
     <img class="part-hero-img"
          src="https://brickarchitect.com/content/parts-large/{{ part_id }}.png"
          alt="{{ name }}"
          onerror="this.src='{{ img_url or '' }}';this.onerror=null">
+    {% endif %}
     <div class="part-number">Part #{{ part_id }}</div>
     <div class="part-title">{{ name or part_id }}</div>
     {% if category %}
@@ -52,6 +61,7 @@
     {% endfor %}
     {% endif %}
   </div>
+  {% if not is_uncategorised %}
   <div class="part-actions">
     <div id="print-toast"></div>
     <button class="btn-action btn-action--full"
@@ -63,6 +73,7 @@
       Print Label
     </button>
   </div>
+  {% endif %}
 
   {% else %}
   <div class="status-section">
@@ -93,6 +104,7 @@
     </form>
     <a href="/" class="btn-ghost">Skip</a>
   </div>
+  {% if not is_uncategorised %}
   <div class="part-actions part-actions--solo">
     <div id="print-toast"></div>
     <button class="btn-action btn-action--full"
@@ -105,6 +117,7 @@
     </button>
   </div>
   {% endif %}
+  {% endif %}
 
   <div class="part-ext-links">
     <a href="https://www.bricklink.com/v2/catalog/catalogitem.page?P={{ part_id }}"
@@ -112,9 +125,11 @@
     <span class="part-ext-sep">·</span>
     <a href="https://rebrickable.com/parts/{{ part_id }}/"
        class="part-ext-link" target="_blank" rel="noopener">Rebrickable</a>
+    {% if not is_uncategorised %}
     <span class="part-ext-sep">·</span>
     <a href="https://brickarchitect.com/parts/{{ part_id }}"
        class="part-ext-link" target="_blank" rel="noopener">BrickArchitect</a>
+    {% endif %}
   </div>
 
   <div class="part-nav">

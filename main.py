@@ -4,12 +4,13 @@ Camberbrick Green — FastAPI application entry point.
 
 import asyncio
 from fastapi import FastAPI, Request
+from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from contextlib import asynccontextmanager
 
 from database import init_db, get_all_part_ids, get_db
-from routers import identify, parts, collection, lookup, storage, library, labels
+from routers import identify, parts, collection, lookup, storage, library, labels, minifigures
 from routers.parts import get_brickarchitect_info
 
 
@@ -75,6 +76,7 @@ app.include_router(lookup.router)
 app.include_router(storage.router)
 app.include_router(library.router)
 app.include_router(labels.router)
+app.include_router(minifigures.router)
 
 
 # ── Page routes ────────────────────────────────────────────────────────────────
@@ -82,6 +84,16 @@ app.include_router(labels.router)
 async def scan(request: Request):
     return templates.TemplateResponse("scan.html", {"request": request})
 
+
+
+@app.get("/library")
+async def library_redirect():
+    return RedirectResponse("/parts", status_code=301)
+
+
+@app.get("/library/{rest:path}")
+async def library_path_redirect(rest: str):
+    return RedirectResponse(f"/parts/{rest}", status_code=301)
 
 
 @app.get("/health")

@@ -65,9 +65,11 @@ async def _enrich(part_id: str) -> dict:
 @router.post("/lookup", response_class=HTMLResponse)
 async def lookup(
     request: Request,
-    part_id: str = Form(...),
-    name: Optional[str] = Form(None),
-    img_url: Optional[str] = Form(None),
+    part_id:   str = Form(...),
+    name:      Optional[str] = Form(None),
+    img_url:   Optional[str] = Form(None),
+    item_type: Optional[str] = Form(None),
+    category:  Optional[str] = Form(None),
 ):
     from fastapi.responses import Response as FastAPIResponse
     part_id = part_id.strip()
@@ -76,6 +78,45 @@ async def lookup(
             "request": request,
             "message": "Part ID is required.",
         })
+
+    # For minifigures, pre-save name/img/theme so the detail page is instant
+    if item_type == "minifig":
+        conn = get_db()
+        try:
+            conn.execute("""
+                INSERT INTO parts (part_id, name, known_owned, img_url, item_type, ba_category)
+                VALUES (?, ?, 0, ?, 'minifig', ?)
+                ON CONFLICT(part_id) DO UPDATE SET
+                    name       = COALESCE(excluded.name, name),
+                    img_url    = COALESCE(NULLIF(excluded.img_url, ''), img_url),
+                    item_type  = 'minifig',
+                    ba_category = COALESCE(excluded.ba_category, ba_category),
+                    updated_at = datetime('now')
+            """, (part_id, name or part_id, img_url or None, category or None))
+            conn.commit()
+        finally:
+            conn.close()
+        return FastAPIResponse(status_code=200, headers={"HX-Redirect": f"/minifigure/{part_id}"})
+
+    # Pre-save whatever Brickognize gave us so it's available on the detail page
+    # even if BrickArchitect doesn't know this part. Only writes if better than what's stored.
+    if name or img_url:
+        conn = get_db()
+        try:
+            conn.execute("""
+                INSERT INTO parts (part_id, name, known_owned, img_url, item_type)
+                VALUES (?, ?, 0, ?, 'part')
+                ON CONFLICT(part_id) DO UPDATE SET
+                    name    = CASE WHEN excluded.name IS NOT NULL
+                                    AND (name IS NULL OR name = part_id)
+                                   THEN excluded.name ELSE name END,
+                    img_url = COALESCE(NULLIF(excluded.img_url, ''), img_url),
+                    updated_at = datetime('now')
+            """, (part_id, name or None, img_url or None))
+            conn.commit()
+        finally:
+            conn.close()
+
     # Navigate to the canonical part detail page
     return FastAPIResponse(status_code=200, headers={"HX-Redirect": f"/part/{part_id}"})
 

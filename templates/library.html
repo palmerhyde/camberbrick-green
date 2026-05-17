@@ -1,10 +1,10 @@
 {% extends "base.html" %}
-{% block title %}Library — Camberbrick Green{% endblock %}
+{% block title %}Parts — Camberbrick Green{% endblock %}
 
 {% block content %}
 <div class="screen">
   <div class="site-header">
-    <span class="site-name">🧱 Camberbrick Green</span>
+    <span class="site-name"><svg class="roundel" viewBox="0 0 20 20" aria-hidden="true"><rect x="1" y="7.8" width="18" height="4.8" fill="#003688"/><circle cx="10" cy="10" r="8.5" fill="none" stroke="#DC241F" stroke-width="3"/></svg> Camberbrick Green</span>
     <div class="site-header-links">
       <a href="/storage" class="site-header-link">Storage</a>
     </div>
@@ -13,7 +13,7 @@
   <div class="breadcrumb">
     <a href="/">Home</a>
     <span class="breadcrumb-sep">›</span>
-    <span class="breadcrumb-current">Library</span>
+    <span class="breadcrumb-current">Parts</span>
   </div>
 
   <div class="page-header">
@@ -23,13 +23,21 @@
 
   <div class="category-grid">
     {% for cat in categories %}
-    <a href="/library/{{ cat.slug }}" class="category-card">
+    <a href="/parts/{{ cat.slug }}" class="category-card">
       <div class="category-card-name">{{ cat.name }}</div>
       <div class="category-card-count {% if cat.count > 0 %}has-parts{% endif %}">
         {% if cat.count == 1 %}1 part{% elif cat.count > 1 %}{{ cat.count }} parts{% else %}—{% endif %}
       </div>
     </a>
     {% endfor %}
+    {% if uncategorised_count > 0 %}
+    <a href="/parts/uncategorised" class="category-card category-card--muted">
+      <div class="category-card-name">Uncategorised</div>
+      <div class="category-card-count has-parts">
+        {% if uncategorised_count == 1 %}1 part{% else %}{{ uncategorised_count }} parts{% endif %}
+      </div>
+    </a>
+    {% endif %}
   </div>
 </div>
 {% endblock %}
