@@ -158,6 +158,7 @@ async def part_detail(request: Request, part_id: str):
             pass
 
     category_parts = [p.strip() for p in category.split(" › ")] if category else []
+    category_slugs = [re.sub(r"[^a-z0-9]+", "-", p.lower()).strip("-") for p in category_parts]
     is_uncategorised = not bool(category)
 
     return templates.TemplateResponse("part_detail.html", {
@@ -167,6 +168,7 @@ async def part_detail(request: Request, part_id: str):
         "img_url":          img_url,
         "category":         category,
         "category_parts":   category_parts,
+        "category_slugs":   category_slugs,
         "part":             part,
         "in_collection":    part is not None,
         "storage_types":    storage_types,

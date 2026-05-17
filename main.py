@@ -70,6 +70,7 @@ app = FastAPI(title="Camberbrick Green", lifespan=lifespan)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
+
 # ── Routers ────────────────────────────────────────────────────────────────────
 app.include_router(identify.router)
 app.include_router(parts.router)

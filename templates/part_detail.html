@@ -17,7 +17,15 @@
     {% else %}
     {% for cp in category_parts %}
     <span class="breadcrumb-sep">›</span>
+    {% if loop.index0 == 0 %}
+    <a href="/parts/{{ category_slugs[0] }}"
+       {% if loop.last %}class="breadcrumb-current"{% endif %}>{{ cp }}</a>
+    {% elif loop.index0 == 1 %}
+    <a href="/parts/{{ category_slugs[0] }}#{{ category_slugs[1] }}"
+       {% if loop.last %}class="breadcrumb-current"{% endif %}>{{ cp }}</a>
+    {% else %}
     <span {% if loop.last %}class="breadcrumb-current"{% endif %}>{{ cp }}</span>
+    {% endif %}
     {% endfor %}
     {% endif %}
   </div>
