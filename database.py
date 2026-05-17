@@ -102,6 +102,8 @@ def init_db() -> None:
             WHERE part_id GLOB '[a-zA-Z]*[0-9]*'
               AND part_id NOT GLOB '[0-9]*'
         """)
+    if "rb_category" not in p_cols:
+        conn.execute("ALTER TABLE parts ADD COLUMN rb_category TEXT")
 
     # Migrate part_categories if group_name column is missing (3rd BA level)
     pc_cols = [r[1] for r in conn.execute("PRAGMA table_info(part_categories)").fetchall()]

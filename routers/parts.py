@@ -67,9 +67,12 @@ async def _fetch_rebrickable(part_id: str) -> dict:
         if res.status_code != 200:
             return {}
         data = res.json()
+        cat = data.get("part_category", {})
+        rb_cat = cat.get("name", "") if isinstance(cat, dict) else str(cat or "")
         return {
-            "name":    data.get("name", ""),
-            "img_url": data.get("part_img_url", ""),
+            "name":        data.get("name", ""),
+            "img_url":     data.get("part_img_url", ""),
+            "rb_category": rb_cat,
         }
     except Exception:
         return {}
@@ -86,9 +89,10 @@ async def part_detail(request: Request, part_id: str):
     finally:
         conn.close()
 
-    cached_name = (part or {}).get("name")
-    cached_img  = (part or {}).get("img_url")
-    cached_cat  = (part or {}).get("ba_category")
+    cached_name   = (part or {}).get("name")
+    cached_img    = (part or {}).get("img_url")
+    cached_cat    = (part or {}).get("ba_category")
+    cached_rb_cat = (part or {}).get("rb_category")
 
     # Treat name == part_id as "no useful name" — raw ID was stored as placeholder
     if cached_name == part_id:
@@ -104,12 +108,13 @@ async def part_detail(request: Request, part_id: str):
         )
 
     # Prefer BA name (user-friendly) → stored name → Rebrickable name
-    name     = cached_name or ba_name or rb.get("name") or part_id
-    img_url  = cached_img  or rb.get("img_url") or ""
-    category = cached_cat  or ba_cat
+    name      = cached_name   or ba_name or rb.get("name") or part_id
+    img_url   = cached_img    or rb.get("img_url") or ""
+    category  = cached_cat    or ba_cat
+    rb_category = cached_rb_cat or rb.get("rb_category") or ""
 
-    # Cache img_url, BA name, full BA category string, and category assignment into DB
-    if img_url or ba_name or ba_cat:
+    # Cache img_url, BA name, RB category, full BA category string, and category assignment into DB
+    if img_url or ba_name or ba_cat or rb_category:
         try:
             conn2 = get_db()
             if img_url and not (part or {}).get("img_url"):
@@ -127,6 +132,11 @@ async def part_detail(request: Request, part_id: str):
                 conn2.execute(
                     "UPDATE parts SET ba_category = ? WHERE part_id = ?",
                     (ba_cat, part_id)
+                )
+            if rb_category and not cached_rb_cat:
+                conn2.execute(
+                    "UPDATE parts SET rb_category = ? WHERE part_id = ?",
+                    (rb_category, part_id)
                 )
             # Save BA category → subcategory assignment (levels 1 and 2 of breadcrumb)
             if ba_cat:
@@ -173,4 +183,5 @@ async def part_detail(request: Request, part_id: str):
         "in_collection":    part is not None and part.get("location") is not None,
         "storage_types":    storage_types,
         "is_uncategorised": is_uncategorised,
+        "rb_category":      rb_category,
     })

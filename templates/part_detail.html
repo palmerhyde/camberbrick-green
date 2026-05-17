@@ -44,6 +44,9 @@
     {% if category %}
     <div class="part-category-line">{{ category }}</div>
     {% endif %}
+    {% if is_uncategorised and rb_category %}
+    <div class="part-rb-category">Rebrickable: {{ rb_category }}</div>
+    {% endif %}
   </div>
 
   {% if in_collection %}
