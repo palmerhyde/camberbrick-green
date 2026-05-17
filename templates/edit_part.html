@@ -24,7 +24,9 @@
     {% endif %}
     <div class="part-number">Part #{{ part.part_id }}</div>
     <div class="part-title">{{ part.name or part.part_id }}</div>
-    {% if part.category %}
+    {% if part.ba_category %}
+    <div class="part-category-line">{{ part.ba_category }}</div>
+    {% elif part.category %}
     <div class="part-category-line">
       {{ part.category }}{% if part.subcategory %} › {{ part.subcategory }}{% endif %}
     </div>

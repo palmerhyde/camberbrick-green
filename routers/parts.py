@@ -81,9 +81,10 @@ async def part_detail(request: Request, part_id: str):
 
     name    = (part or {}).get("name") or rb.get("name") or part_id
     img_url = (part or {}).get("img_url") or rb.get("img_url") or ""
-    category = ba_cat  # BrickArchitect only — never Rebrickable
+    # Use stored full BA category; fall back to live-fetched for first view
+    category = (part or {}).get("ba_category") or ba_cat
 
-    # Cache img_url and BA category assignment into DB whenever we have fresh data
+    # Cache img_url, full BA category string, and category assignment into DB
     if img_url or ba_cat:
         try:
             conn2 = get_db()
@@ -92,12 +93,18 @@ async def part_detail(request: Request, part_id: str):
                     "UPDATE parts SET img_url = ? WHERE part_id = ?",
                     (img_url, part_id)
                 )
+            if ba_cat and not (part or {}).get("ba_category"):
+                conn2.execute(
+                    "UPDATE parts SET ba_category = ? WHERE part_id = ?",
+                    (ba_cat, part_id)
+                )
             # Save BA category → subcategory assignment (levels 1 and 2 of breadcrumb)
             if ba_cat:
-                # breadcrumb is e.g. "Basic › Brick › 2× Brick" — we only use levels 1+2
+                # breadcrumb: "Basic › Brick › 2× Brick" — store all 3 levels
                 levels = [p.strip() for p in ba_cat.split(" › ")]
                 if len(levels) >= 2:
                     cat_name, sub_name = levels[0], levels[1]
+                    group_name = levels[2] if len(levels) >= 3 else None
                     cat_row = conn2.execute(
                         "SELECT id FROM categories WHERE name = ?", (cat_name,)
                     ).fetchone()
@@ -107,10 +114,14 @@ async def part_detail(request: Request, part_id: str):
                             (cat_row["id"], sub_name)
                         ).fetchone()
                         if sub_row:
-                            conn2.execute(
-                                "INSERT OR IGNORE INTO part_categories (part_id, category_id, subcategory_id) VALUES (?, ?, ?)",
-                                (part_id, cat_row["id"], sub_row["id"])
-                            )
+                            conn2.execute("""
+                                INSERT INTO part_categories (part_id, category_id, subcategory_id, group_name)
+                                VALUES (?, ?, ?, ?)
+                                ON CONFLICT(part_id) DO UPDATE SET
+                                    category_id    = excluded.category_id,
+                                    subcategory_id = excluded.subcategory_id,
+                                    group_name     = excluded.group_name
+                            """, (part_id, cat_row["id"], sub_row["id"], group_name))
             conn2.commit()
             conn2.close()
         except Exception:

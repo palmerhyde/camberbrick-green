@@ -90,8 +90,19 @@ def init_db() -> None:
     if "code" not in st_cols:
         conn.execute("ALTER TABLE storage_types ADD COLUMN code TEXT")
 
+    # Migrate parts table if ba_category column is missing
+    p_cols = [r[1] for r in conn.execute("PRAGMA table_info(parts)").fetchall()]
+    if "ba_category" not in p_cols:
+        conn.execute("ALTER TABLE parts ADD COLUMN ba_category TEXT")
+
+    # Migrate part_categories if group_name column is missing (3rd BA level)
+    pc_cols = [r[1] for r in conn.execute("PRAGMA table_info(part_categories)").fetchall()]
+    if "group_name" not in pc_cols:
+        conn.execute("ALTER TABLE part_categories ADD COLUMN group_name TEXT")
+
     _seed_storage_types(conn)
     _seed_taxonomy(conn)
+    _backfill_group_names(conn)
     conn.commit()
     conn.close()
 
@@ -161,3 +172,35 @@ def _seed_taxonomy(conn: sqlite3.Connection) -> None:
         for row in stale_ids:
             conn.execute("DELETE FROM part_categories WHERE subcategory_id = ?", (row["id"],))
             conn.execute("DELETE FROM subcategories WHERE id = ?", (row["id"],))
+
+
+def _backfill_group_names(conn: sqlite3.Connection) -> None:
+    """Fill group_name in part_categories from stored ba_category — no network needed."""
+    rows = conn.execute("""
+        SELECT p.part_id, p.ba_category
+        FROM parts p
+        JOIN part_categories pc ON p.part_id = pc.part_id
+        WHERE pc.group_name IS NULL AND p.ba_category IS NOT NULL
+    """).fetchall()
+    for row in rows:
+        levels = [lvl.strip() for lvl in row["ba_category"].split(" › ")]
+        if len(levels) >= 3:
+            conn.execute(
+                "UPDATE part_categories SET group_name = ? WHERE part_id = ?",
+                (levels[2], row["part_id"]),
+            )
+
+
+def get_parts_missing_ba_category() -> list[str]:
+    """Return part_ids that are in part_categories but have no ba_category stored."""
+    conn = get_db()
+    try:
+        rows = conn.execute("""
+            SELECT p.part_id
+            FROM parts p
+            JOIN part_categories pc ON p.part_id = pc.part_id
+            WHERE p.ba_category IS NULL
+        """).fetchall()
+        return [r["part_id"] for r in rows]
+    finally:
+        conn.close()

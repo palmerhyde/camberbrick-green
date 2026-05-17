@@ -36,7 +36,7 @@ def _get_part_with_location(conn, part_id: str) -> Optional[dict]:
     """Return a part dict including its primary location, or None."""
     row = conn.execute("""
         SELECT
-            p.part_id, p.name, p.img_url,
+            p.part_id, p.name, p.img_url, p.ba_category,
             c.name   AS category,
             sc.name  AS subcategory,
             l.code   AS location,
@@ -70,6 +70,7 @@ def _get_part_with_location(conn, part_id: str) -> Optional[dict]:
         "part_id":       row["part_id"],
         "name":          row["name"],
         "img_url":       row["img_url"],
+        "ba_category":   row["ba_category"],
         "category":      row["category"],
         "subcategory":   row["subcategory"],
         "location":      row["location"],
