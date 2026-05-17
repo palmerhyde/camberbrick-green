@@ -1081,6 +1081,33 @@ button, input, select, textarea { font-family: inherit; }
   border-color: #bbb;
   font-size: 15px;
 }
+.print-size-row {
+  display: flex;
+  gap: 6px;
+  width: 100%;
+}
+.btn-print-size {
+  flex: 1;
+  padding: 11px 6px;
+  border: 1px solid #bbb;
+  border-radius: 4px;
+  background: #fff;
+  color: #111;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: center;
+}
+.btn-print-size:hover { background: #f7f7f7; }
+.btn-print-size:active { opacity: 0.8; }
+.print-spinner {
+  display: none;
+  text-align: center;
+  width: 100%;
+  margin-bottom: 6px;
+}
+.print-spinner.htmx-request { display: block; }
 
 .toast {
   margin-bottom: 8px;

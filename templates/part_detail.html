@@ -105,14 +105,27 @@
   {% if not is_uncategorised %}
   <div class="part-actions">
     <div id="print-toast"></div>
-    <button class="btn-action btn-action--full"
-            hx-post="/part/{{ part_id }}/print-label"
-            hx-target="#print-toast"
-            hx-swap="innerHTML"
-            hx-indicator="#print-spinner">
-      <span id="print-spinner" class="htmx-indicator">⏳</span>
-      Print Label
-    </button>
+    <span id="print-spinner" class="htmx-indicator print-spinner">⏳</span>
+    <div class="print-size-row">
+      <button class="btn-print-size"
+              hx-post="/part/{{ part_id }}/print-label"
+              hx-vals='{"size": "small"}'
+              hx-target="#print-toast"
+              hx-swap="innerHTML"
+              hx-indicator="#print-spinner">Small</button>
+      <button class="btn-print-size"
+              hx-post="/part/{{ part_id }}/print-label"
+              hx-vals='{"size": "medium"}'
+              hx-target="#print-toast"
+              hx-swap="innerHTML"
+              hx-indicator="#print-spinner">Medium</button>
+      <button class="btn-print-size"
+              hx-post="/part/{{ part_id }}/print-label"
+              hx-vals='{"size": "large"}'
+              hx-target="#print-toast"
+              hx-swap="innerHTML"
+              hx-indicator="#print-spinner">Large</button>
+    </div>
   </div>
   {% endif %}
 
@@ -148,14 +161,27 @@
   {% if not is_uncategorised %}
   <div class="part-actions part-actions--solo">
     <div id="print-toast"></div>
-    <button class="btn-action btn-action--full"
-            hx-post="/part/{{ part_id }}/print-label"
-            hx-target="#print-toast"
-            hx-swap="innerHTML"
-            hx-indicator="#print-spinner">
-      <span id="print-spinner" class="htmx-indicator">⏳</span>
-      Print Label
-    </button>
+    <span id="print-spinner" class="htmx-indicator print-spinner">⏳</span>
+    <div class="print-size-row">
+      <button class="btn-print-size"
+              hx-post="/part/{{ part_id }}/print-label"
+              hx-vals='{"size": "small"}'
+              hx-target="#print-toast"
+              hx-swap="innerHTML"
+              hx-indicator="#print-spinner">Small</button>
+      <button class="btn-print-size"
+              hx-post="/part/{{ part_id }}/print-label"
+              hx-vals='{"size": "medium"}'
+              hx-target="#print-toast"
+              hx-swap="innerHTML"
+              hx-indicator="#print-spinner">Medium</button>
+      <button class="btn-print-size"
+              hx-post="/part/{{ part_id }}/print-label"
+              hx-vals='{"size": "large"}'
+              hx-target="#print-toast"
+              hx-swap="innerHTML"
+              hx-indicator="#print-spinner">Large</button>
+    </div>
   </div>
   {% endif %}
   {% endif %}
