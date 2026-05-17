@@ -92,29 +92,41 @@ async def part_detail(request: Request, part_id: str):
     cached_name   = (part or {}).get("name")
     cached_img    = (part or {}).get("img_url")
     cached_cat    = (part or {}).get("ba_category")
-    cached_rb_cat = (part or {}).get("rb_category")
+    cached_rb_cat = (part or {}).get("rb_category")  # None = never tried; "" = tried, not found
 
     # Treat name == part_id as "no useful name" — raw ID was stored as placeholder
     if cached_name == part_id:
         cached_name = None
 
-    # Skip external calls if everything we need is already cached in the DB
-    if cached_name and cached_cat:
+    # Decide which external calls are needed.
+    # cached_rb_cat is not None (including "") means Rebrickable was already tried.
+    need_rb = cached_rb_cat is None
+    # Need BA if: no name yet, OR no category AND haven't completed an enrichment cycle yet
+    need_ba = not cached_name or (not cached_cat and cached_rb_cat is None)
+    called_rb = False
+
+    if not need_rb and not need_ba:
         rb, ba_name, ba_cat = {}, "", ""
-    else:
+    elif need_rb and need_ba:
         rb, (ba_name, ba_cat) = await asyncio.gather(
             _fetch_rebrickable(part_id),
             get_brickarchitect_info(part_id),
         )
+        called_rb = True
+    elif need_rb:
+        rb, ba_name, ba_cat = await _fetch_rebrickable(part_id), "", ""
+        called_rb = True
+    else:
+        rb, ba_name, ba_cat = {}, *await get_brickarchitect_info(part_id)
 
     # Prefer BA name (user-friendly) → stored name → Rebrickable name
-    name      = cached_name   or ba_name or rb.get("name") or part_id
-    img_url   = cached_img    or rb.get("img_url") or ""
-    category  = cached_cat    or ba_cat
-    rb_category = cached_rb_cat or rb.get("rb_category") or ""
+    name        = cached_name or ba_name or rb.get("name") or part_id
+    img_url     = cached_img  or rb.get("img_url") or ""
+    category    = cached_cat  or ba_cat
+    rb_category = cached_rb_cat if cached_rb_cat is not None else rb.get("rb_category", "")
 
     # Cache img_url, BA name, RB category, full BA category string, and category assignment into DB
-    if img_url or ba_name or ba_cat or rb_category:
+    if called_rb or img_url or ba_name or ba_cat:
         try:
             conn2 = get_db()
             if img_url and not (part or {}).get("img_url"):
@@ -133,10 +145,11 @@ async def part_detail(request: Request, part_id: str):
                     "UPDATE parts SET ba_category = ? WHERE part_id = ?",
                     (ba_cat, part_id)
                 )
-            if rb_category and not cached_rb_cat:
+            if called_rb and cached_rb_cat is None:
+                # Always store result (even "" for not-found) so we don't retry
                 conn2.execute(
                     "UPDATE parts SET rb_category = ? WHERE part_id = ?",
-                    (rb_category, part_id)
+                    (rb.get("rb_category", ""), part_id)
                 )
             # Save BA category → subcategory assignment (levels 1 and 2 of breadcrumb)
             if ba_cat:
@@ -164,8 +177,8 @@ async def part_detail(request: Request, part_id: str):
                             """, (part_id, cat_row["id"], sub_row["id"], group_name))
             conn2.commit()
             conn2.close()
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"[parts] cache write error for {part_id}: {e}")
 
     category_parts = [p.strip() for p in category.split(" › ")] if category else []
     category_slugs = [re.sub(r"[^a-z0-9]+", "-", p.lower()).strip("-") for p in category_parts]
