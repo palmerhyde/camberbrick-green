@@ -1,18 +1,24 @@
 """
 GET /part/{part_id}
-Fetches part details from Rebrickable (name, image, category)
-and enriches with a BrickArchitect category breadcrumb.
+Full-page part detail: merges local collection data with Rebrickable + BrickArchitect.
 """
 
+import asyncio
 import os
 import re
 import httpx
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Request
+from fastapi.templating import Jinja2Templates
+from fastapi.responses import HTMLResponse
 from dotenv import load_dotenv
+
+from database import get_db
+from routers.collection import _get_part_with_location
 
 load_dotenv()
 
 router = APIRouter()
+templates = Jinja2Templates(directory="templates")
 
 REBRICKABLE_BASE = "https://rebrickable.com/api/v3/lego/parts"
 
@@ -36,44 +42,57 @@ async def get_brickarchitect_category(part_id: str) -> str:
         return ""
 
 
-@router.get("/part/{part_id}")
-async def get_part(part_id: str):
-    api_key = os.getenv("REBRICKABLE_API_KEY")
+async def _fetch_rebrickable(part_id: str) -> dict:
+    api_key = os.getenv("REBRICKABLE_API_KEY", "")
     if not api_key or api_key == "your_key_here":
-        raise HTTPException(status_code=500, detail="REBRICKABLE_API_KEY not configured in .env")
-
+        return {}
     try:
-        async with httpx.AsyncClient(timeout=15) as client:
+        async with httpx.AsyncClient(timeout=10) as client:
             res = await client.get(
                 f"{REBRICKABLE_BASE}/{part_id}/",
                 headers={"Authorization": f"key {api_key}", "Accept": "application/json"},
             )
-    except httpx.RequestError as e:
-        raise HTTPException(status_code=502, detail=f"Rebrickable unreachable: {e}")
+        if res.status_code != 200:
+            return {}
+        data = res.json()
+        return {
+            "name":    data.get("name", ""),
+            "img_url": data.get("part_img_url", ""),
+        }
+    except Exception:
+        return {}
 
-    if res.status_code == 404:
-        raise HTTPException(status_code=404, detail=f"Part {part_id} not found on Rebrickable")
-    if res.status_code != 200:
-        raise HTTPException(status_code=502, detail=f"Rebrickable error {res.status_code}")
 
-    data = res.json()
+@router.get("/part/{part_id}", response_class=HTMLResponse)
+async def part_detail(request: Request, part_id: str):
+    conn = get_db()
+    try:
+        part = _get_part_with_location(conn, part_id)
+        storage_types = conn.execute(
+            "SELECT * FROM storage_types ORDER BY sort_order, name"
+        ).fetchall()
+    finally:
+        conn.close()
 
-    rebrickable_category = (
-        data.get("part_category", {}).get("name", "")
-        if isinstance(data.get("part_category"), dict)
-        else str(data.get("part_category") or "")
+    rb, ba_cat = await asyncio.gather(
+        _fetch_rebrickable(part_id),
+        get_brickarchitect_category(part_id),
     )
 
-    brickarchitect_category = await get_brickarchitect_category(part_id)
-    category = brickarchitect_category  # BrickArchitect only — never fall back to Rebrickable
+    name    = (part or {}).get("name") or rb.get("name") or part_id
+    img_url = (part or {}).get("img_url") or rb.get("img_url") or ""
+    category = ba_cat  # BrickArchitect only — never Rebrickable
 
-    return {
-        "id":                    data.get("part_num", part_id),
-        "name":                  data.get("name", part_id),
-        "category":              category,
-        "rebrickable_category":  rebrickable_category,
-        "brickarchitect_category": brickarchitect_category,
-        "img_url":               data.get("part_img_url"),
-        "part_url":              data.get("part_url"),
-        "brickarchitect_url":    f"https://brickarchitect.com/parts/{part_id}",
-    }
+    category_parts = [p.strip() for p in category.split(" › ")] if category else []
+
+    return templates.TemplateResponse("part_detail.html", {
+        "request":        request,
+        "part_id":        part_id,
+        "name":           name,
+        "img_url":        img_url,
+        "category":       category,
+        "category_parts": category_parts,
+        "part":           part,
+        "in_collection":  part is not None,
+        "storage_types":  storage_types,
+    })

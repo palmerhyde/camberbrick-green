@@ -10,7 +10,7 @@ import socketserver
 import os
 import mimetypes
 
-PORT = 8000
+PORT = int(os.environ.get("PORT", 8002))
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 

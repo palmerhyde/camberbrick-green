@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block title %}{{ name }} ({{ part_id }}) — Camberbrick Green{% endblock %}
+
+{% block content %}
+<div class="screen">
+
+  <!-- Breadcrumb -->
+  <nav class="breadcrumb">
+    <a href="/library" class="breadcrumb-back">←</a>
+    <div class="breadcrumb-trail">
+      <a href="/library">Library</a>
+      {% for cp in category_parts %}
+      <span class="breadcrumb-sep">›</span>
+      <span>{{ cp }}</span>
+      {% endfor %}
+      <span class="breadcrumb-sep">›</span>
+      <span class="breadcrumb-current">{{ name or part_id }}</span>
+    </div>
+  </nav>
+
+  <!-- Part image (large, centred) -->
+  <div class="part-detail-img-box">
+    {% if img_url %}
+    <img class="part-detail-img" src="{{ img_url }}" alt="{{ name }}">
+    {% else %}
+    <span style="font-size:72px">🧱</span>
+    {% endif %}
+  </div>
+
+  <!-- Part title -->
+  <div class="part-detail-header">
+    <h1 class="part-detail-name">{{ name or part_id }}</h1>
+    <div class="part-detail-id">Part #{{ part_id }}</div>
+    {% if category %}
+    <div class="part-detail-category">{{ category }}</div>
+    {% endif %}
+  </div>
+
+  <!-- Collection status -->
+  {% if in_collection %}
+  <div class="status-found">
+    <div class="status-label">✓ In your collection</div>
+    {% if part.location %}
+    <div class="location-big">{{ part.storage_code or part.location }}</div>
+    {% if part.storage_name %}
+    <div class="status-sub">{{ part.storage_name }}</div>
+    {% endif %}
+    {% if part.overflow %}
+    {% for o in part.overflow %}
+    <div class="location-overflow">Also: {{ o.location }} ({{ o.qty }})</div>
+    {% endfor %}
+    {% endif %}
+    {% else %}
+    <div class="status-sub">No location recorded yet</div>
+    {% endif %}
+  </div>
+  <a href="/part/{{ part_id }}/edit" class="btn-secondary" style="text-align:center; margin-bottom:1.25rem">Edit location</a>
+
+  {% else %}
+  <div class="status-new">
+    <div class="status-label">⊕ Not in your collection</div>
+    <div class="status-sub">Add it to your collection below</div>
+  </div>
+
+  <form method="post" action="/part/{{ part_id }}/add">
+    <input type="hidden" name="name"     value="{{ name or '' }}">
+    <input type="hidden" name="img_url"  value="{{ img_url or '' }}">
+    <input type="hidden" name="category" value="{{ category or '' }}">
+
+    <label class="field-label" for="location">Storage location</label>
+    {% if storage_types %}
+    <select class="field-input" id="location" name="location" required>
+      <option value="" disabled selected>Choose storage…</option>
+      {% for st in storage_types %}
+      <option value="{{ st.name }}">{{ st.name }}</option>
+      {% endfor %}
+    </select>
+    {% else %}
+    <input class="field-input" id="location" name="location"
+           type="text" placeholder="e.g. Akro-Mils large"
+           autocomplete="off" required>
+    {% endif %}
+
+    <button type="submit" class="btn-primary">Add to collection →</button>
+  </form>
+  {% endif %}
+
+  <!-- External links -->
+  <div class="ext-links">
+    <a href="https://www.bricklink.com/v2/catalog/catalogitem.page?P={{ part_id }}"
+       class="ext-link-item" target="_blank" rel="noopener">BrickLink</a>
+    <a href="https://rebrickable.com/parts/{{ part_id }}/"
+       class="ext-link-item" target="_blank" rel="noopener">Rebrickable</a>
+    <a href="https://brickarchitect.com/parts/{{ part_id }}"
+       class="ext-link-item" target="_blank" rel="noopener">BrickArchitect</a>
+  </div>
+
+  <!-- Navigation -->
+  <div class="actions">
+    <a href="/" class="btn-ghost">Scan another piece</a>
+  </div>
+
+</div>
+{% endblock %}

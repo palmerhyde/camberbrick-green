@@ -6,7 +6,7 @@
       "name": "Camberbrick Green (FastAPI)",
       "runtimeExecutable": "node",
       "runtimeArgs": ["preview_server.js"],
-      "port": 8001
+      "port": 8002
     },
     {
       "name": "Legacy Next.js prototype",

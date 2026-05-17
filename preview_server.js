@@ -9,7 +9,7 @@ const http = require('http')
 const fs   = require('fs')
 const path = require('path')
 
-const PORT    = process.env.PORT || 8001
+const PORT    = parseInt(process.env.PORT || '8002', 10)
 const BASE    = __dirname
 const TYPES   = { '.html': 'text/html', '.css': 'text/css', '.js': 'application/javascript' }
 
