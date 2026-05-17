@@ -26,10 +26,10 @@
   <div class="status-found">
     <div class="status-label">✓ In your collection</div>
     {% if part.location %}
-    <div class="location-big">{{ part.location }}</div>
-    <div class="status-sub">
-      {{ part.qty or 0 }} piece{% if (part.qty or 0) != 1 %}s{% endif %}
-    </div>
+    <div class="location-big">{{ part.storage_code or part.location }}</div>
+    {% if part.storage_name %}
+    <div class="status-sub">{{ part.storage_name }}</div>
+    {% endif %}
     {% if part.overflow %}
     {% for o in part.overflow %}
     <div class="location-overflow">Overflow: {{ o.location }} ({{ o.qty }})</div>

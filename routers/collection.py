@@ -37,10 +37,12 @@ def _get_part_with_location(conn, part_id: str) -> Optional[dict]:
     row = conn.execute("""
         SELECT
             p.part_id, p.name, p.img_url,
-            c.name  AS category,
-            sc.name AS subcategory,
-            l.code  AS location,
-            l.type  AS location_type,
+            c.name   AS category,
+            sc.name  AS subcategory,
+            l.code   AS location,
+            l.type   AS location_type,
+            st.code  AS storage_code,
+            st.name  AS storage_name,
             pl.role,
             pl.qty
         FROM parts p
@@ -49,6 +51,7 @@ def _get_part_with_location(conn, part_id: str) -> Optional[dict]:
         LEFT JOIN subcategories sc    ON pc.subcategory_id = sc.id
         LEFT JOIN part_locations pl   ON p.part_id = pl.part_id AND pl.role = 'primary'
         LEFT JOIN locations l         ON pl.location_id = l.id
+        LEFT JOIN storage_types st    ON l.storage_type_id = st.id
         WHERE p.part_id = ?
     """, (part_id,)).fetchone()
 
@@ -71,6 +74,8 @@ def _get_part_with_location(conn, part_id: str) -> Optional[dict]:
         "subcategory":   row["subcategory"],
         "location":      row["location"],
         "location_type": row["location_type"],
+        "storage_code":  row["storage_code"],
+        "storage_name":  row["storage_name"],
         "qty":           row["qty"] or 0,
         "overflow":      [{"location": o["code"], "type": o["type"], "qty": o["qty"]} for o in overflow],
     }

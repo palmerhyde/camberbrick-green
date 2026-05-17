@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Edit {{ part.name or part.part_id }} — Camberbrick Green{% endblock %}
+
+{% block content %}
+<div class="screen">
+  <header class="header">
+    <a href="/library" class="back-btn">←</a>
+    <h1 class="header-title">Edit part</h1>
+  </header>
+
+  <!-- Part summary -->
+  <div class="part-hero" style="margin-bottom:1.5rem;">
+    <div class="part-img-box">
+      {% if part.img_url %}
+      <img class="part-img" src="{{ part.img_url }}" alt="{{ part.name }}">
+      {% else %}
+      <span class="part-img-fallback">🧱</span>
+      {% endif %}
+    </div>
+    <div class="part-hero-info">
+      <div class="part-id">#{{ part.part_id }}</div>
+      <div class="part-name">{{ part.name or part.part_id }}</div>
+      {% if part.category %}
+      <div class="part-category">{{ part.category }}{% if part.subcategory %} › {{ part.subcategory }}{% endif %}</div>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if error %}
+  <div class="error-banner">{{ error }}</div>
+  {% endif %}
+
+  <form method="post" action="/part/{{ part.part_id }}/edit">
+    <label class="field-label" for="location">Storage location</label>
+    {% if storage_types %}
+    <select class="field-input" id="location" name="location" required>
+      <option value="" disabled>Choose storage…</option>
+      {% for st in storage_types %}
+      <option value="{{ st.name }}"
+        {% if part.storage_name == st.name or part.location == st.name %}selected{% endif %}>
+        {% if st.code %}{{ st.code }} — {% endif %}{{ st.name }}
+      </option>
+      {% endfor %}
+    </select>
+    {% else %}
+    <input class="field-input" id="location" name="location"
+           value="{{ part.location or '' }}" type="text" required>
+    {% endif %}
+
+    <button type="submit" class="btn-primary">Save changes</button>
+  </form>
+
+  <a href="/library" class="btn-ghost">Cancel</a>
+</div>
+{% endblock %}

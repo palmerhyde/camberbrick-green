@@ -23,6 +23,17 @@ def init_db() -> None:
     conn = get_db()
 
     conn.executescript("""
+        CREATE TABLE IF NOT EXISTS storage_types (
+            id           INTEGER PRIMARY KEY,
+            name         TEXT UNIQUE NOT NULL,
+            code         TEXT,
+            photo_path   TEXT,
+            purchase_url TEXT,
+            notes        TEXT,
+            sort_order   INTEGER DEFAULT 0,
+            created_at   TEXT DEFAULT (datetime('now'))
+        );
+
         CREATE TABLE IF NOT EXISTS parts (
             part_id          TEXT PRIMARY KEY,
             name             TEXT,
@@ -46,10 +57,11 @@ def init_db() -> None:
         );
 
         CREATE TABLE IF NOT EXISTS locations (
-            id          INTEGER PRIMARY KEY,
-            code        TEXT UNIQUE NOT NULL,
-            type        TEXT NOT NULL,
-            description TEXT
+            id              INTEGER PRIMARY KEY,
+            code            TEXT UNIQUE NOT NULL,
+            type            TEXT NOT NULL,
+            description     TEXT,
+            storage_type_id INTEGER REFERENCES storage_types(id)
         );
 
         CREATE TABLE IF NOT EXISTS part_categories (
@@ -68,6 +80,16 @@ def init_db() -> None:
         );
     """)
 
+    # Migrate locations table if storage_type_id column is missing
+    loc_cols = [r[1] for r in conn.execute("PRAGMA table_info(locations)").fetchall()]
+    if "storage_type_id" not in loc_cols:
+        conn.execute("ALTER TABLE locations ADD COLUMN storage_type_id INTEGER REFERENCES storage_types(id)")
+
+    # Migrate storage_types table if code column is missing
+    st_cols = [r[1] for r in conn.execute("PRAGMA table_info(storage_types)").fetchall()]
+    if "code" not in st_cols:
+        conn.execute("ALTER TABLE storage_types ADD COLUMN code TEXT")
+
     _seed_demo_data(conn)
     conn.commit()
     conn.close()
@@ -75,9 +97,26 @@ def init_db() -> None:
 
 def _seed_demo_data(conn: sqlite3.Connection) -> None:
     """
-    Pre-seed two demo parts (3001, 3710) so the 'found' flow works immediately.
+    Pre-seed storage types, demo parts, and locations.
     Uses INSERT OR IGNORE so re-runs are safe.
     """
+    # Seed storage types
+    # Only seed storage types when the table is completely empty.
+    # Once the user has added or renamed anything, never touch this table on startup.
+    if conn.execute("SELECT COUNT(*) FROM storage_types").fetchone()[0] == 0:
+        defaults = [
+            ("Akro-Mils 64-drawer", "AL", 1),
+            ("Akro-Mils 24-drawer", "AS", 2),
+            ("Bead boxes",          "BB", 3),
+            ("Shoe boxes",          "SS", 4),
+            ("Overflow",            "OF", 5),
+        ]
+        for name, code, order in defaults:
+            conn.execute(
+                "INSERT INTO storage_types (name, code, sort_order) VALUES (?, ?, ?)",
+                (name, code, order),
+            )
+
     # Seed categories
     conn.execute("INSERT OR IGNORE INTO categories (name) VALUES ('Basic')")
     conn.execute("INSERT OR IGNORE INTO categories (name) VALUES ('Plates')")

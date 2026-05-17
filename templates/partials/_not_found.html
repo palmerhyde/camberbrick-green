@@ -36,13 +36,18 @@
     <input type="hidden" name="category" value="{{ category or '' }}">
 
     <label class="field-label" for="location">Storage location</label>
+    {% if storage_types %}
+    <select class="field-input" id="location" name="location" required>
+      <option value="" disabled selected>Choose storage…</option>
+      {% for st in storage_types %}
+      <option value="{{ st.name }}">{{ st.name }}</option>
+      {% endfor %}
+    </select>
+    {% else %}
     <input class="field-input" id="location" name="location"
-           type="text" placeholder="e.g. A3, B7, shoe-box"
+           type="text" placeholder="e.g. Acro Mills large"
            autocomplete="off" required autofocus>
-
-    <label class="field-label" for="qty">Quantity</label>
-    <input class="field-input" id="qty" name="qty"
-           type="number" placeholder="1" min="1" value="1">
+    {% endif %}
 
     <button type="submit" class="btn-primary">Add to collection →</button>
   </form>

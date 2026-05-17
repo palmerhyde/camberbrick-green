@@ -30,14 +30,7 @@
            accept="image/*"
            capture="environment"
            style="display:none"
-           onchange="showPreview(this)">
-
-    <button id="identify-btn" type="submit" class="btn-primary hidden">
-      Identify this piece
-    </button>
-    <button type="button" class="btn-secondary hidden" id="clear-btn" onclick="clearPreview()">
-      Clear
-    </button>
+           onchange="showPreviewAndSubmit(this)">
   </form>
 
   <!-- Spinner (shown during hx-request) -->
@@ -66,25 +59,17 @@
   </form>
 
   <a href="/library" class="link-btn">Browse your library</a>
+  <a href="/storage" class="link-btn" style="color:#999;">Manage storage types</a>
 </div>
 
 <script>
-  function showPreview(input) {
+  function showPreviewAndSubmit(input) {
     if (!input.files[0]) return;
     const url = URL.createObjectURL(input.files[0]);
     document.getElementById('preview').src = url;
     document.getElementById('preview').classList.remove('hidden');
     document.getElementById('upload-zone').classList.add('hidden');
-    document.getElementById('identify-btn').classList.remove('hidden');
-    document.getElementById('clear-btn').classList.remove('hidden');
-  }
-
-  function clearPreview() {
-    document.getElementById('file-input').value = '';
-    document.getElementById('preview').classList.add('hidden');
-    document.getElementById('upload-zone').classList.remove('hidden');
-    document.getElementById('identify-btn').classList.add('hidden');
-    document.getElementById('clear-btn').classList.add('hidden');
+    document.getElementById('scan-form').requestSubmit();
   }
 </script>
 {% endblock %}
