@@ -8,10 +8,11 @@ A mobile-first LEGO part manager. Photograph a piece to identify it, track where
 - **Minifigure support** — minifigures are automatically detected from the scan and handled separately; browse your full minifigure collection grouped by theme on the dedicated Minifigures page
 - **Home page cards** — two side-by-side cards show the most recently added minifigure and part; if nothing was added in the last 7 days, each falls back to a daily spotlight (deterministically seeded, stable within a day)
 - **Collection tracking** — record which storage drawer or bag each part lives in
+- **Overflow locations** — parts can have multiple storage locations; add or remove overflow locations inline from the part detail page
 - **Inline location editing** — change a part's storage location from its detail page without navigating away
 - **Parts library** — browse your entire collection by category and subcategory, sourced from BrickArchitect's taxonomy
 - **Uncategorised parts** — parts not found in BrickArchitect's database are collected in a dedicated Uncategorised section so nothing gets lost
-- **Label printing** — one-tap printing to a Brother PT-P710BT (P-Touch Cube Plus) on 24mm tape; labels are auto-patched from BrickArchitect's `.lbx` format
+- **Label printing** — print to a Brother PT-P710BT (P-Touch Cube Plus) on 24mm tape; choose Small (2″), Medium (4.5″), or Large (unconstrained) to match the target drawer; labels are auto-patched from BrickArchitect's `.lbx` format, with image and font scaled to fit
 - **User-friendly names** — prefers BrickArchitect names ("Hammer Small") over the verbose Rebrickable equivalents
 - **Fast navigation** — part metadata is cached on first view; repeat visits are served entirely from the local database
 
