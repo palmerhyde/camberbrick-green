@@ -96,22 +96,30 @@ def init_db() -> None:
     conn.close()
 
 
-# Full Brick Architect taxonomy — 12 top-level categories with subcategories.
-# Names must match BA's breadcrumb anchor text exactly so the scraper can map parts.
+# Full Brick Architect taxonomy — scraped directly from brickarchitect.com/parts/
+# Subcategory names match BA's breadcrumb level-2 anchor text exactly.
 _BA_TAXONOMY: dict[str, list[str]] = {
-    "Basic":        ["Brick", "Plate", "Tile", "Slope", "Wedge",
-                     "Round", "Arch", "Modified Brick", "Modified Plate", "Modified Tile"],
-    "Wall":         ["Panel", "Window", "Door", "Fence"],
-    "SNOT":         ["Bracket", "Modified Brick", "Modified Plate"],
-    "Angle":        ["Hinge", "Turntable", "Swivel Plate"],
-    "Curve":        ["Arch", "Dome", "Cylinder"],
-    "Articulation": ["Ball Joint", "Bar & Clip", "Tow Ball", "Pin & Connector"],
-    "Minifig":      ["Head", "Torso", "Leg", "Accessory", "Hair & Hat", "Visor & Helmet"],
-    "Nature":       ["Plant", "Animal", "Rock & Ground"],
-    "Vehicle":      ["Wheel & Tyre", "Axle & Mudguard", "Cockpit & Windscreen", "Hull & Body"],
-    "Technic":      ["Beam", "Connector", "Gear", "Pin & Axle", "Panel & Plate"],
-    "Electronics":  ["Brick & Hub", "Light", "Motor & Servo"],
-    "DUPLO":        ["Brick", "Figure", "Animal & Nature", "Vehicle & Accessory"],
+    "Basic":        ["Brick", "Plate", "Blate", "Tile", "Baseplate", "Other"],
+    "Wall":         ["Window & Door", "Panel", "Decorative", "Fence", "Structural", "Stairs", "Container"],
+    "SNOT":         ["Brick", "Bracket", "Jumper"],
+    "Angle":        ["Slope", "Wedge", "Wedge Slope"],
+    "Curve":        ["Curved Brick", "Curved Plate", "Curved Blate", "Curved Tile",
+                     "Cylinder", "Cone", "Dish and Dome", "Ball", "Curved",
+                     "Arch", "Wedge", "Windscreen", "Mudguard", "Heart & Star", "Other Curved Parts"],
+    "Articulation": ["Rotation", "Clip", "Ball & Socket", "Rail & Groove", "Flexible", "Other"],
+    "Minifig":      ["Minifigure", "Minidoll", "Other Figs", "Hair", "Clothing",
+                     "Accessories", "Container", "Weapons", "Clikits"],
+    "Nature":       ["Plants", "Flowers", "Produce", "Animal", "Tooth",
+                     "Barb, Horn, Tail & Feather", "Web", "Elemental"],
+    "Vehicle":      ["Wheel", "Wheel Pin", "Vehicle Base", "Nose & Roof", "Train",
+                     "Coaster", "Stuntz", "Steering", "Propeller & Engine", "Fin & Wing"],
+    "Technic":      ["Brick", "Plate", "Beam", "Thin Beam", "Panel", "Connector",
+                     "Gears", "Link & Chain", "Steering", "Engine",
+                     "Mechanical & Pneumatic", "Other Technic"],
+    "Electronics":  ["Hubs", "Motors", "Sensor & Accessories", "Bluetooth",
+                     "Dimensions", "Standalone Electronics", "Smart Play"],
+    "DUPLO":        ["Brick", "Plate", "Wall", "Angle", "Curved", "Ball Tube",
+                     "Accessories and Nature", "Other", "QUATRO", "PRIMO"],
 }
 
 
@@ -133,7 +141,7 @@ def _seed_storage_types(conn: sqlite3.Connection) -> None:
 
 
 def _seed_taxonomy(conn: sqlite3.Connection) -> None:
-    """Seed the full BA taxonomy into categories / subcategories. Safe to re-run."""
+    """Seed the full BA taxonomy. Adds missing entries and removes stale ones."""
     for cat_name, subcats in _BA_TAXONOMY.items():
         conn.execute("INSERT OR IGNORE INTO categories (name) VALUES (?)", (cat_name,))
         cat_id = conn.execute(
@@ -144,3 +152,12 @@ def _seed_taxonomy(conn: sqlite3.Connection) -> None:
                 "INSERT OR IGNORE INTO subcategories (category_id, name) VALUES (?, ?)",
                 (cat_id, sub_name),
             )
+        # Remove subcategories that are no longer in the taxonomy
+        placeholders = ",".join("?" * len(subcats))
+        stale_ids = conn.execute(
+            f"SELECT id FROM subcategories WHERE category_id = ? AND name NOT IN ({placeholders})",
+            [cat_id] + list(subcats),
+        ).fetchall()
+        for row in stale_ids:
+            conn.execute("DELETE FROM part_categories WHERE subcategory_id = ?", (row["id"],))
+            conn.execute("DELETE FROM subcategories WHERE id = ?", (row["id"],))
