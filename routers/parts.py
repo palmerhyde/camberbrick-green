@@ -23,23 +23,35 @@ templates = Jinja2Templates(directory="templates")
 REBRICKABLE_BASE = "https://rebrickable.com/api/v3/lego/parts"
 
 
-async def get_brickarchitect_category(part_id: str) -> str:
-    """Scrape the category breadcrumb from BrickArchitect."""
+async def get_brickarchitect_info(part_id: str) -> tuple[str, str]:
+    """Scrape name and category breadcrumb from BrickArchitect. Returns (name, category)."""
     try:
         async with httpx.AsyncClient(timeout=10) as client:
             res = await client.get(f"https://brickarchitect.com/parts/{part_id}")
         if res.status_code != 200:
-            return ""
+            return "", ""
         html = res.text
+        # Name: first <h1> — strip the "(Part XXXXXX)" span
+        name = ""
+        h1_match = re.search(r'<h1>([^<]+)', html)
+        if h1_match:
+            name = h1_match.group(1).strip().rstrip(",").strip()
+        # Category: breadcrumb nav, skip the first "home" anchor
         nav_match = re.search(r'<div class="chapternav">([\s\S]*?)</div>', html, re.IGNORECASE)
-        if not nav_match:
-            return ""
-        anchors = re.findall(r'<a[^>]*>([^<]+)</a>', nav_match.group(1))
-        if len(anchors) <= 1:
-            return ""
-        return " › ".join(a.strip() for a in anchors[1:])
+        category = ""
+        if nav_match:
+            anchors = re.findall(r'<a[^>]*>([^<]+)</a>', nav_match.group(1))
+            if len(anchors) > 1:
+                category = " › ".join(a.strip() for a in anchors[1:])
+        return name, category
     except Exception:
-        return ""
+        return "", ""
+
+
+async def get_brickarchitect_category(part_id: str) -> str:
+    """Scrape the category breadcrumb from BrickArchitect."""
+    _, category = await get_brickarchitect_info(part_id)
+    return category
 
 
 async def _fetch_rebrickable(part_id: str) -> dict:
@@ -74,24 +86,30 @@ async def part_detail(request: Request, part_id: str):
     finally:
         conn.close()
 
-    rb, ba_cat = await asyncio.gather(
+    rb, (ba_name, ba_cat) = await asyncio.gather(
         _fetch_rebrickable(part_id),
-        get_brickarchitect_category(part_id),
+        get_brickarchitect_info(part_id),
     )
 
-    name    = (part or {}).get("name") or rb.get("name") or part_id
+    # Prefer BA name (user-friendly) → stored name → Rebrickable name
+    name    = (part or {}).get("name") or ba_name or rb.get("name") or part_id
     img_url = (part or {}).get("img_url") or rb.get("img_url") or ""
     # Use stored full BA category; fall back to live-fetched for first view
     category = (part or {}).get("ba_category") or ba_cat
 
-    # Cache img_url, full BA category string, and category assignment into DB
-    if img_url or ba_cat:
+    # Cache img_url, BA name, full BA category string, and category assignment into DB
+    if img_url or ba_name or ba_cat:
         try:
             conn2 = get_db()
             if img_url and not (part or {}).get("img_url"):
                 conn2.execute(
                     "UPDATE parts SET img_url = ? WHERE part_id = ?",
                     (img_url, part_id)
+                )
+            if ba_name and not (part or {}).get("name"):
+                conn2.execute(
+                    "UPDATE parts SET name = ? WHERE part_id = ?",
+                    (ba_name, part_id)
                 )
             if ba_cat and not (part or {}).get("ba_category"):
                 conn2.execute(
