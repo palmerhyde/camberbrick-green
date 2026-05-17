@@ -1,6 +1,16 @@
 # Camberbrick Green
 
-LEGO part discovery, categorisation, and storage management — photograph a piece, check if you own it, find where it lives.
+A mobile-first LEGO part manager. Photograph a piece to identify it, track where it's stored, browse your collection by category, and print shelf labels — all from your phone.
+
+## Features
+
+- **Photo identification** — point your phone camera at a part and Brickognize returns the most likely matches
+- **Collection tracking** — record which storage drawer or bag each part lives in
+- **Inline location editing** — change a part's storage location from its detail page without navigating away
+- **Library** — browse your entire collection by category and subcategory, sourced from BrickArchitect's taxonomy
+- **Label printing** — one-tap printing to a Brother PT-P710BT (P-Touch Cube Plus) on 24mm tape; labels are auto-patched from BrickArchitect's `.lbx` format
+- **User-friendly names** — prefers BrickArchitect names ("Hammer Small") over the verbose Rebrickable equivalents
+- **Fast navigation** — part metadata is cached on first view; repeat visits are served entirely from the local database
 
 ## Quick start
 
@@ -9,12 +19,10 @@ LEGO part discovery, categorisation, and storage management — photograph a pie
 pip install -r requirements.txt
 ```
 
-### 2. Add your Rebrickable API key
-Get a free key at https://rebrickable.com/api/ (takes ~1 minute)
-
-Edit `.env`:
+### 2. Configure environment
+Copy `.env.example` to `.env` and fill in your keys:
 ```
-REBRICKABLE_API_KEY=your_actual_key_here
+REBRICKABLE_API_KEY=your_key_here   # free at https://rebrickable.com/api/
 ```
 
 ### 3. Run
@@ -22,21 +30,14 @@ REBRICKABLE_API_KEY=your_actual_key_here
 uvicorn main:app --reload
 ```
 
-Open http://localhost:8000 on your computer,
-**or** open http://YOUR_LOCAL_IP:8000 on your phone
-(e.g. http://192.168.1.5:8000 — find your IP with `ipconfig` / `ifconfig`)
+Open http://localhost:8000 in a browser, or on your phone via your machine's local IP (both must be on the same WiFi network):
 
-## How to access from your phone
-
-Both devices must be on the same WiFi network. Then:
 ```bash
-# Find your machine's local IP:
+# Find your local IP:
 ipconfig getifaddr en0   # Mac
-ipconfig                 # Windows (look for IPv4)
-```
+ipconfig                 # Windows
 
-Then run with host binding so your phone can reach it:
-```bash
+# Run accessible to your phone:
 uvicorn main:app --reload --host 0.0.0.0
 ```
 
@@ -46,34 +47,48 @@ uvicorn main:app --reload --host 0.0.0.0
 |---|---|
 | Backend | Python + FastAPI |
 | Database | SQLite |
-| Frontend | Jinja2 templates + HTMX |
-| Part recognition | Brickognize |
-| Part metadata | Rebrickable |
-| Category taxonomy | Brick Architect |
+| Frontend | Jinja2 templates + HTMX (no JS framework) |
+| Part recognition | Brickognize API |
+| Part metadata + images | Rebrickable API |
+| Names, categories, labels | BrickArchitect |
+| Label printing | Brother P-touch Editor + AppleScript |
 
 ## Storage philosophy
 
-The system tracks **ownership and location**, not precise inventory:
+The system tracks **ownership and location**, not precise inventory counts:
 
-- One Akro-Mils drawer = one LEGO part (no mixing)
-- High-frequency parts → Akro-Mils drawers
+- One Akro-Mils drawer holds one LEGO part type (no mixing)
+- High-frequency parts → dedicated Akro-Mils drawers
 - Long-tail parts → ziplock bag → subcategory bag → category shoebox
 
 See `documents/vision.md` for the full product vision.
 
-## Pre-seeded demo parts
-- **3001** (2×4 Brick) → location A3, qty 47
-- **3710** (1×4 Plate) → location B7, qty 12
-
 ## Project structure
 
 ```
-main.py                  # FastAPI app entry point
-database.py              # SQLite schema + connection helper
+main.py                        # FastAPI app, startup backfill task
+database.py                    # SQLite schema + connection helpers
+print_label.applescript        # AppleScript: open .lbx and trigger print
 requirements.txt
-routers/                 # API route handlers
-templates/               # Jinja2 HTML templates
-static/                  # CSS
-data/                    # SQLite database (gitignored)
-documents/               # Vision and architecture docs
+
+routers/
+  identify.py                  # POST /identify — photo → part candidates
+  parts.py                     # GET /part/{id} — detail page + metadata cache
+  lookup.py                    # Collection lookup, add, inline location update
+  collection.py                # Collection read helpers
+  library.py                   # GET /library — category/subcategory browsing
+  labels.py                    # POST /part/{id}/print-label — fetch, patch, print
+  storage.py                   # Storage type management
+
+templates/
+  scan.html                    # Home — camera scan page
+  part_detail.html             # Part detail with inline location select
+  library*.html                # Library, category, subcategory pages
+  edit_part.html               # (Legacy) full-page location editor
+  partials/                    # HTMX response fragments
+
+static/
+  style.css                    # Single stylesheet, mobile-first
+
+documents/                     # Vision and architecture docs
 ```
