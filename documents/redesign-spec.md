@@ -111,7 +111,7 @@ Storage types are managed by the user at `/storage`. The seeding only runs when 
 
 ### Key design decisions made so far
 - **No quantity tracking in UI** — qty column exists in DB but is hidden everywhere. "In collection or not" is the only state that matters for now
-- **BrickArchitect category preferred** over Rebrickable in all lookup results — fetched in parallel
+- **BrickArchitect category is the only category system** — Rebrickable is used for part name and image only, never for category. If BrickArchitect does not return a category for a part, the category is left blank. Never fall back to Rebrickable's taxonomy
 - **Auto-submit on photo selection** — no extra "Identify" button tap needed
 - **Location = storage type** — no individual drawer/slot tracking yet. The BA category tells you where in the unit to look
 - **Storage type short codes** (AL, AS, etc.) shown in library and result screens instead of full name
