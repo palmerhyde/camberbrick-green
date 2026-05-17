@@ -8,7 +8,7 @@ import re
 import httpx
 from fastapi import APIRouter, Form, Request
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from typing import Optional
 from dotenv import load_dotenv
 
@@ -97,12 +97,21 @@ async def lookup(
     resolved_name = name or rb.get("name") or part_id
     resolved_cat  = rb.get("category", "")
 
+    conn2 = get_db()
+    try:
+        storage_types = conn2.execute(
+            "SELECT * FROM storage_types ORDER BY sort_order, name"
+        ).fetchall()
+    finally:
+        conn2.close()
+
     return templates.TemplateResponse("partials/_not_found.html", {
-        "request":  request,
-        "part_id":  part_id,
-        "name":     resolved_name,
-        "img_url":  resolved_img,
-        "category": resolved_cat,
+        "request":      request,
+        "part_id":      part_id,
+        "name":         resolved_name,
+        "img_url":      resolved_img,
+        "category":     resolved_cat,
+        "storage_types": storage_types,
     })
 
 
@@ -114,7 +123,6 @@ async def add_part(
     img_url:  str = Form(""),
     category: str = Form(""),
     location: str = Form(...),
-    qty:      int = Form(1),
 ):
     part_id  = part_id.strip()
     location = location.strip()
@@ -130,13 +138,37 @@ async def add_part(
                 updated_at = datetime('now')
         """, (part_id, name or part_id, img_url or None))
 
-        loc_id = _get_or_create_location(conn, location)
+        # Find the storage_type_id for the selected location name
+        st_row = conn.execute(
+            "SELECT id FROM storage_types WHERE name = ?", (location,)
+        ).fetchone()
+        st_id = st_row["id"] if st_row else None
+
+        # Find or create the location entry, linked to its storage type
+        existing = conn.execute(
+            "SELECT id FROM locations WHERE code = ?", (location,)
+        ).fetchone()
+        if existing:
+            loc_id = existing["id"]
+            if st_id:
+                conn.execute(
+                    "UPDATE locations SET storage_type_id = ? WHERE id = ?",
+                    (st_id, loc_id),
+                )
+        else:
+            conn.execute(
+                "INSERT INTO locations (code, type, description, storage_type_id) VALUES (?, ?, ?, ?)",
+                (location, "storage_type", location, st_id),
+            )
+            loc_id = conn.execute(
+                "SELECT id FROM locations WHERE code = ?", (location,)
+            ).fetchone()["id"]
 
         conn.execute("""
             INSERT INTO part_locations (part_id, location_id, role, qty)
-            VALUES (?, ?, 'primary', ?)
-            ON CONFLICT(part_id, location_id) DO UPDATE SET qty = excluded.qty
-        """, (part_id, loc_id, qty))
+            VALUES (?, ?, 'primary', 1)
+            ON CONFLICT(part_id, location_id) DO UPDATE SET qty = 1
+        """, (part_id, loc_id))
 
         conn.commit()
     finally:
@@ -148,3 +180,92 @@ async def add_part(
         "name":     name or part_id,
         "location": location,
     })
+
+
+def _get_storage_types(conn):
+    return conn.execute(
+        "SELECT * FROM storage_types ORDER BY sort_order, name"
+    ).fetchall()
+
+
+def _upsert_location(conn, location: str) -> int:
+    """Find or create a location row for the given storage type name. Returns location id."""
+    st_row = conn.execute(
+        "SELECT id FROM storage_types WHERE name = ?", (location,)
+    ).fetchone()
+    st_id = st_row["id"] if st_row else None
+
+    existing = conn.execute("SELECT id FROM locations WHERE code = ?", (location,)).fetchone()
+    if existing:
+        loc_id = existing["id"]
+        if st_id:
+            conn.execute(
+                "UPDATE locations SET storage_type_id = ? WHERE id = ?", (st_id, loc_id)
+            )
+    else:
+        conn.execute(
+            "INSERT INTO locations (code, type, description, storage_type_id) VALUES (?, ?, ?, ?)",
+            (location, "storage_type", location, st_id),
+        )
+        loc_id = conn.execute("SELECT id FROM locations WHERE code = ?", (location,)).fetchone()["id"]
+    return loc_id
+
+
+@router.get("/part/{part_id}/edit", response_class=HTMLResponse)
+async def edit_part_page(request: Request, part_id: str):
+    conn = get_db()
+    try:
+        part = _get_part_with_location(conn, part_id)
+        storage_types = _get_storage_types(conn)
+    finally:
+        conn.close()
+
+    if not part:
+        return templates.TemplateResponse("partials/_error.html", {
+            "request": request,
+            "message": f"Part {part_id} not found in your collection.",
+        })
+
+    return templates.TemplateResponse("edit_part.html", {
+        "request":       request,
+        "part":          part,
+        "storage_types": storage_types,
+        "error":         "",
+    })
+
+
+@router.post("/part/{part_id}/edit")
+async def edit_part_save(
+    request: Request,
+    part_id:  str,
+    location: str = Form(...),
+):
+    conn = get_db()
+    try:
+        part = _get_part_with_location(conn, part_id)
+        if not part:
+            return templates.TemplateResponse("partials/_error.html", {
+                "request": request,
+                "message": f"Part {part_id} not found.",
+            })
+
+        loc_id = _upsert_location(conn, location)
+
+        # Replace primary location
+        conn.execute(
+            "DELETE FROM part_locations WHERE part_id = ? AND role = 'primary'",
+            (part_id,),
+        )
+        conn.execute(
+            "INSERT INTO part_locations (part_id, location_id, role, qty) VALUES (?, ?, 'primary', 1)",
+            (part_id, loc_id),
+        )
+        conn.execute(
+            "UPDATE parts SET updated_at = datetime('now') WHERE part_id = ?",
+            (part_id,),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+    return RedirectResponse("/library", status_code=303)

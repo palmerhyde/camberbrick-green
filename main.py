@@ -8,7 +8,7 @@ from fastapi.templating import Jinja2Templates
 from contextlib import asynccontextmanager
 
 from database import init_db
-from routers import identify, parts, collection, lookup
+from routers import identify, parts, collection, lookup, storage
 
 
 @asynccontextmanager
@@ -28,6 +28,7 @@ app.include_router(identify.router)
 app.include_router(parts.router)
 app.include_router(collection.router)
 app.include_router(lookup.router)
+app.include_router(storage.router)
 
 
 # ── Page routes ────────────────────────────────────────────────────────────────
