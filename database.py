@@ -204,3 +204,13 @@ def get_parts_missing_ba_category() -> list[str]:
         return [r["part_id"] for r in rows]
     finally:
         conn.close()
+
+
+def get_all_part_ids() -> list[str]:
+    """Return all part_ids in the collection."""
+    conn = get_db()
+    try:
+        rows = conn.execute("SELECT part_id FROM parts").fetchall()
+        return [r["part_id"] for r in rows]
+    finally:
+        conn.close()
