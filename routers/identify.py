@@ -2,8 +2,12 @@
 POST /identify
 Accepts a multipart image upload, proxies it to Brickognize,
 and returns the candidates HTML partial (top 3 matches).
+
+Brickognize's item.id may be a BrickLink ID. We prefer the Rebrickable ID
+extracted from external_sites, since Rebrickable and BrickArchitect share IDs.
 """
 
+import re
 import httpx
 from fastapi import APIRouter, UploadFile, File, Request
 from fastapi.templating import Jinja2Templates
@@ -43,10 +47,23 @@ async def identify(request: Request, image: UploadFile = File(...)):
         return _error(request, f"Brickognize returned an error ({response.status_code}). Try again.")
 
     data = response.json()
-    items = data.get("items", [])[:3]
+    raw_items = data.get("items", [])[:3]
 
-    if not items:
+    if not raw_items:
         return _error(request, "No matches found — try a clearer photo with better lighting.")
+
+    items = []
+    for item in raw_items:
+        # Prefer Rebrickable ID — Rebrickable and BrickArchitect share IDs,
+        # while Brickognize's item.id can be a BrickLink ID which differs.
+        part_id = item.get("id", "")
+        for site in item.get("external_sites", []):
+            if "rebrickable.com" in site.get("url", ""):
+                m = re.search(r"/parts/([^/]+)/?", site["url"])
+                if m:
+                    part_id = m.group(1)
+                    break
+        items.append({**item, "id": part_id})
 
     return templates.TemplateResponse("partials/_candidates.html", {
         "request": request,
