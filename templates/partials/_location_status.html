@@ -1,0 +1,22 @@
+<div class="status-section" id="status-section">
+  <div class="status-badge">✓ In your collection</div>
+  <div class="location-code" id="location-code">{{ part.storage_code or part.location or '—' }}</div>
+  <select class="location-select"
+          name="location"
+          hx-post="/part/{{ part_id }}/set-location"
+          hx-trigger="change"
+          hx-target="#status-section"
+          hx-swap="outerHTML">
+    {% for st in storage_types %}
+    <option value="{{ st.name }}"
+      {% if part.storage_name == st.name or part.location == st.name %}selected{% endif %}>
+      {% if st.code %}{{ st.code }} — {% endif %}{{ st.name }}
+    </option>
+    {% endfor %}
+  </select>
+  {% if part.overflow %}
+  {% for o in part.overflow %}
+  <div class="location-overflow">Also: {{ o.location }}</div>
+  {% endfor %}
+  {% endif %}
+</div>

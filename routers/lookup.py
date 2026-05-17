@@ -215,6 +215,46 @@ def _upsert_location(conn, location: str) -> int:
     return loc_id
 
 
+@router.post("/part/{part_id}/set-location", response_class=HTMLResponse)
+async def set_part_location(
+    request: Request,
+    part_id: str,
+    location: str = Form(...),
+):
+    conn = get_db()
+    try:
+        part = _get_part_with_location(conn, part_id)
+        if not part:
+            return HTMLResponse(status_code=404)
+
+        loc_id = _upsert_location(conn, location)
+        conn.execute(
+            "DELETE FROM part_locations WHERE part_id = ? AND role = 'primary'",
+            (part_id,),
+        )
+        conn.execute(
+            "INSERT INTO part_locations (part_id, location_id, role, qty) VALUES (?, ?, 'primary', 1)",
+            (part_id, loc_id),
+        )
+        conn.execute(
+            "UPDATE parts SET updated_at = datetime('now') WHERE part_id = ?",
+            (part_id,),
+        )
+        conn.commit()
+
+        part = _get_part_with_location(conn, part_id)
+        storage_types = _get_storage_types(conn)
+    finally:
+        conn.close()
+
+    return templates.TemplateResponse("partials/_location_status.html", {
+        "request":       request,
+        "part_id":       part_id,
+        "part":          part,
+        "storage_types": storage_types,
+    })
+
+
 @router.get("/part/{part_id}/edit", response_class=HTMLResponse)
 async def edit_part_page(request: Request, part_id: str):
     conn = get_db()

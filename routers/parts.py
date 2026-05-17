@@ -86,16 +86,23 @@ async def part_detail(request: Request, part_id: str):
     finally:
         conn.close()
 
-    rb, (ba_name, ba_cat) = await asyncio.gather(
-        _fetch_rebrickable(part_id),
-        get_brickarchitect_info(part_id),
-    )
+    cached_name = (part or {}).get("name")
+    cached_img  = (part or {}).get("img_url")
+    cached_cat  = (part or {}).get("ba_category")
+
+    # Skip external calls if everything we need is already cached in the DB
+    if cached_name and cached_cat:
+        rb, ba_name, ba_cat = {}, "", ""
+    else:
+        rb, (ba_name, ba_cat) = await asyncio.gather(
+            _fetch_rebrickable(part_id),
+            get_brickarchitect_info(part_id),
+        )
 
     # Prefer BA name (user-friendly) → stored name → Rebrickable name
-    name    = (part or {}).get("name") or ba_name or rb.get("name") or part_id
-    img_url = (part or {}).get("img_url") or rb.get("img_url") or ""
-    # Use stored full BA category; fall back to live-fetched for first view
-    category = (part or {}).get("ba_category") or ba_cat
+    name     = cached_name or ba_name or rb.get("name") or part_id
+    img_url  = cached_img  or rb.get("img_url") or ""
+    category = cached_cat  or ba_cat
 
     # Cache img_url, BA name, full BA category string, and category assignment into DB
     if img_url or ba_name or ba_cat:

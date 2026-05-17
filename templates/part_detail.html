@@ -30,25 +30,38 @@
   </div>
 
   {% if in_collection %}
-  <div class="status-section">
+  <div class="status-section" id="status-section">
     <div class="status-badge">✓ In your collection</div>
-    {% if part.location %}
-    <div class="location-code">{{ part.storage_code or part.location }}</div>
-    {% if part.storage_name %}
-    <div class="location-name">{{ part.storage_name }}</div>
-    {% endif %}
+    <div class="location-code" id="location-code">{{ part.storage_code or part.location or '—' }}</div>
+    <select class="location-select"
+            name="location"
+            hx-post="/part/{{ part_id }}/set-location"
+            hx-trigger="change"
+            hx-target="#status-section"
+            hx-swap="outerHTML">
+      {% for st in storage_types %}
+      <option value="{{ st.name }}"
+        {% if part.storage_name == st.name or part.location == st.name %}selected{% endif %}>
+        {% if st.code %}{{ st.code }} — {% endif %}{{ st.name }}
+      </option>
+      {% endfor %}
+    </select>
     {% if part.overflow %}
     {% for o in part.overflow %}
     <div class="location-overflow">Also: {{ o.location }}</div>
     {% endfor %}
     {% endif %}
-    {% else %}
-    <div class="status-note">No location recorded yet</div>
-    {% endif %}
   </div>
-  <div class="actions-section">
-    <a href="/part/{{ part_id }}/edit" class="btn-secondary">Edit location</a>
-    <a href="/" class="btn-ghost">Scan another piece</a>
+  <div class="part-actions">
+    <div id="print-toast"></div>
+    <button class="btn-action btn-action--full"
+            hx-post="/part/{{ part_id }}/print-label"
+            hx-target="#print-toast"
+            hx-swap="innerHTML"
+            hx-indicator="#print-spinner">
+      <span id="print-spinner" class="htmx-indicator">⏳</span>
+      Print Label
+    </button>
   </div>
 
   {% else %}
@@ -80,27 +93,32 @@
     </form>
     <a href="/" class="btn-ghost">Skip</a>
   </div>
-  {% endif %}
-
-  <div class="print-label-section">
+  <div class="part-actions part-actions--solo">
     <div id="print-toast"></div>
-    <button class="btn-print"
+    <button class="btn-action btn-action--full"
             hx-post="/part/{{ part_id }}/print-label"
             hx-target="#print-toast"
             hx-swap="innerHTML"
             hx-indicator="#print-spinner">
       <span id="print-spinner" class="htmx-indicator">⏳</span>
-      🖨 Print Label
+      Print Label
     </button>
   </div>
+  {% endif %}
 
-  <div class="ext-links-section">
+  <div class="part-ext-links">
     <a href="https://www.bricklink.com/v2/catalog/catalogitem.page?P={{ part_id }}"
-       class="ext-link-pill" target="_blank" rel="noopener">BrickLink</a>
+       class="part-ext-link" target="_blank" rel="noopener">BrickLink</a>
+    <span class="part-ext-sep">·</span>
     <a href="https://rebrickable.com/parts/{{ part_id }}/"
-       class="ext-link-pill" target="_blank" rel="noopener">Rebrickable</a>
+       class="part-ext-link" target="_blank" rel="noopener">Rebrickable</a>
+    <span class="part-ext-sep">·</span>
     <a href="https://brickarchitect.com/parts/{{ part_id }}"
-       class="ext-link-pill" target="_blank" rel="noopener">BrickArchitect</a>
+       class="part-ext-link" target="_blank" rel="noopener">BrickArchitect</a>
+  </div>
+
+  <div class="part-nav">
+    <a href="/" class="part-nav-link">← Scan another piece</a>
   </div>
 </div>
 {% endblock %}

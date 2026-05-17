@@ -29,7 +29,7 @@
   {% if parts %}
   <div class="part-grid">
     {% for p in parts %}
-    <a href="/part/{{ p.part_id }}/edit" class="part-grid-card">
+    <a href="/part/{{ p.part_id }}" class="part-grid-card">
       <div class="part-grid-img-wrap">
         {% if p.img_url %}
         <img class="part-grid-img" src="{{ p.img_url }}" alt="{{ p.name }}" loading="lazy">

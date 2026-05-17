@@ -331,6 +331,23 @@ button, input, select, textarea { font-family: inherit; }
   color: #aaa;
   margin-top: 4px;
 }
+.location-select {
+  width: 100%;
+  margin-top: 6px;
+  padding: 8px 10px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  background: #fafafa;
+  color: #555;
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  appearance: auto;
+}
+.location-select:focus {
+  outline: none;
+  border-color: #bbb;
+}
 .status-note {
   font-size: 14px;
   color: #999;
@@ -839,39 +856,84 @@ button, input, select, textarea { font-family: inherit; }
   margin-bottom: 1.25rem;
 }
 
-/* ── Part detail — external links ── */
-/* ── Print label ─────────────────────────────────────────────────────────── */
-.print-label-section {
-  padding: 0.75rem 1.25rem 1rem;
-  border-top: 1px solid #f0f0f0;
+/* ── Part detail — actions + external links ── */
+.part-actions {
+  padding: 1.1rem 1.25rem 0.25rem;
 }
-.btn-print {
+.part-actions--solo {
+  padding-bottom: 1rem;
+}
+.part-actions-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.btn-action {
+  padding: 11px 10px;
+  border: 1px solid #d0d0d0;
+  border-radius: 4px;
+  background: #fff;
+  color: #111;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
   display: flex;
   align-items: center;
-  gap: 6px;
-  width: 100%;
-  padding: 12px 16px;
-  background: #0075be;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
   justify-content: center;
+  gap: 5px;
 }
-.btn-print:active { opacity: 0.85; }
+.btn-action:hover { background: #f7f7f7; text-decoration: none; }
+.btn-action:active { opacity: 0.8; }
+.btn-action--full {
+  width: 100%;
+  padding: 13px 10px;
+  border-color: #bbb;
+  font-size: 15px;
+}
+
 .toast {
   margin-bottom: 8px;
   padding: 10px 14px;
-  border-radius: 8px;
-  font-size: 14px;
+  border-radius: 6px;
+  font-size: 13px;
   font-weight: 500;
   text-align: center;
 }
 .toast--success { background: #e6f4ea; color: #1e7e34; }
 .toast--error   { background: #fdecea; color: #c0392b; }
 
+.part-ext-links {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 1rem 1.25rem 0.5rem;
+}
+.part-ext-link {
+  font-size: 12px;
+  color: #bbb;
+  text-decoration: none;
+}
+.part-ext-link:hover { color: #555; text-decoration: underline; }
+.part-ext-sep {
+  font-size: 12px;
+  color: #ddd;
+}
+.part-nav {
+  display: flex;
+  justify-content: center;
+  padding: 0 1.25rem 1.25rem;
+}
+.part-nav-link {
+  font-size: 13px;
+  color: #bbb;
+  text-decoration: none;
+}
+.part-nav-link:hover { color: #555; }
+
+/* ── Edit/preview pages — external link pills (unchanged) ── */
 .ext-links-section {
   display: flex;
   gap: 8px;
