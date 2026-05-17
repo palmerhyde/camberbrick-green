@@ -80,6 +80,24 @@
       </div>
     </form>
   </div>
+
+  {% if featured %}
+  <a href="/minifigure/{{ featured.part_id }}" class="featured-card">
+    <div class="featured-label">{{ featured_label }}</div>
+    <div class="featured-body">
+      {% if featured.img_url %}
+      <img class="featured-img" src="{{ featured.img_url }}" alt="{{ featured.name }}">
+      {% endif %}
+      <div class="featured-info">
+        <div class="featured-name">{{ featured.name }}</div>
+        {% if featured.ba_category %}
+        <div class="featured-theme">{{ featured.ba_category }}</div>
+        {% endif %}
+        <div class="featured-id">#{{ featured.part_id }}</div>
+      </div>
+    </div>
+  </a>
+  {% endif %}
 </div>
 
 <script>

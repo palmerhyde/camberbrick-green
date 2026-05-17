@@ -3,6 +3,8 @@ Camberbrick Green — FastAPI application entry point.
 """
 
 import asyncio
+import random
+from datetime import date, datetime, timezone
 from fastapi import FastAPI, Request
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -97,13 +99,42 @@ async def scan(request: Request):
         locations_count = conn.execute(
             "SELECT COUNT(*) FROM storage_types"
         ).fetchone()[0]
+
+        # Featured minifigure: most recently added if within 7 days,
+        # otherwise a daily spotlight (changes each day, stable within a day)
+        featured = None
+        featured_label = None
+        all_mf = conn.execute("""
+            SELECT p.part_id, p.name, p.img_url, p.ba_category, p.updated_at
+            FROM parts p
+            JOIN part_locations pl ON pl.part_id = p.part_id
+            WHERE p.item_type = 'minifig'
+            ORDER BY p.updated_at DESC
+        """).fetchall()
+        if all_mf:
+            latest = all_mf[0]
+            try:
+                added = datetime.fromisoformat(latest["updated_at"])
+                days_ago = (datetime.now() - added).days
+            except Exception:
+                days_ago = 999
+            if days_ago < 7:
+                featured = latest
+                featured_label = "Latest addition"
+            else:
+                rng = random.Random(date.today().toordinal())
+                featured = rng.choice(all_mf)
+                featured_label = "Today's spotlight"
     finally:
         conn.close()
+
     return templates.TemplateResponse("scan.html", {
-        "request":        request,
-        "parts_count":    parts_count,
-        "minifig_count":  minifig_count,
+        "request":         request,
+        "parts_count":     parts_count,
+        "minifig_count":   minifig_count,
         "locations_count": locations_count,
+        "featured":        featured,
+        "featured_label":  featured_label,
     })
 
 
