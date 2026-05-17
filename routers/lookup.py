@@ -13,7 +13,7 @@ from typing import Optional
 from dotenv import load_dotenv
 
 from database import get_db
-from routers.collection import _get_part_with_location, _get_or_create_location
+from routers.collection import _get_part_with_location, _get_or_create_location, _upsert_part_category
 from routers.parts import get_brickarchitect_category
 
 load_dotenv()
@@ -170,6 +170,7 @@ async def add_part(
             ON CONFLICT(part_id, location_id) DO UPDATE SET qty = 1
         """, (part_id, loc_id))
 
+        _upsert_part_category(conn, part_id, category)
         conn.commit()
     finally:
         conn.close()

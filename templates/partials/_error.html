@@ -1,12 +1,16 @@
 <div class="screen">
-  <header class="header">
-    <a href="/" class="back-btn">←</a>
-    <h1 class="header-title">Camberbrick Green</h1>
-  </header>
-
-  <div class="error-banner">
-    {{ message }}
+  <div class="site-header">
+    <span class="site-name">🧱 Camberbrick</span>
   </div>
 
-  <a href="/" class="btn-primary" style="text-align:center; display:block">Try again</a>
+  <div class="breadcrumb">
+    <a href="/">Home</a>
+    <span class="breadcrumb-sep">›</span>
+    <span class="breadcrumb-current">Error</span>
+  </div>
+
+  <div class="page-content">
+    <div class="error-banner">{{ message }}</div>
+    <a href="/" class="btn-primary" style="margin-top:0.5rem;">Try again</a>
+  </div>
 </div>

@@ -81,6 +81,38 @@ def _get_part_with_location(conn, part_id: str) -> Optional[dict]:
     }
 
 
+def _upsert_part_category(conn, part_id: str, category_str: str) -> None:
+    """Parse a BA breadcrumb like 'Basic › Brick' and save to part_categories."""
+    if not category_str:
+        return
+    segments = [s.strip() for s in category_str.split("›")]
+    cat_name = segments[0] if segments else ""
+    sub_name = segments[1] if len(segments) > 1 else ""
+    if not cat_name:
+        return
+    cat_row = conn.execute(
+        "SELECT id FROM categories WHERE name = ?", (cat_name,)
+    ).fetchone()
+    if not cat_row:
+        return
+    cat_id = cat_row["id"]
+    sub_id = None
+    if sub_name:
+        sub_row = conn.execute(
+            "SELECT id FROM subcategories WHERE category_id = ? AND name = ?",
+            (cat_id, sub_name),
+        ).fetchone()
+        if sub_row:
+            sub_id = sub_row["id"]
+    conn.execute("""
+        INSERT INTO part_categories (part_id, category_id, subcategory_id)
+        VALUES (?, ?, ?)
+        ON CONFLICT(part_id) DO UPDATE SET
+            category_id    = excluded.category_id,
+            subcategory_id = excluded.subcategory_id
+    """, (part_id, cat_id, sub_id))
+
+
 def _get_or_create_location(conn, code: str) -> int:
     """Return location id for code, creating an untyped entry if new."""
     row = conn.execute("SELECT id FROM locations WHERE code = ?", (code,)).fetchone()

@@ -1,34 +1,35 @@
 <div class="screen">
-  <header class="header">
-    <a href="/" class="back-btn">←</a>
-    <h1 class="header-title">Camberbrick Green</h1>
-  </header>
-
-  <div class="part-hero">
-    <div class="part-img-box">
-      {% if img_url %}
-      <img class="part-img" src="{{ img_url }}" alt="{{ part.name }}">
-      {% else %}
-      <span class="part-img-fallback">🧱</span>
-      {% endif %}
-    </div>
-    <div class="part-hero-info">
-      <div class="part-id">#{{ part.part_id }}</div>
-      <div class="part-name">{{ part.name or part.part_id }}</div>
-      {% if part.category %}
-      <div class="part-category">
-        {{ part.category }}{% if part.subcategory %} › {{ part.subcategory }}{% endif %}
-      </div>
-      {% endif %}
-    </div>
+  <div class="site-header">
+    <span class="site-name">🧱 Camberbrick</span>
   </div>
 
-  <div class="status-found">
-    <div class="status-label">✓ In your collection</div>
+  <div class="breadcrumb">
+    <a href="/">Home</a>
+    <span class="breadcrumb-sep">›</span>
+    <span class="breadcrumb-current">{{ part.name or part.part_id }}</span>
+  </div>
+
+  <div class="part-hero">
+    {% if img_url %}
+    <img class="part-hero-img" src="{{ img_url }}" alt="{{ part.name }}">
+    {% else %}
+    <div class="part-hero-img-fallback">🧱</div>
+    {% endif %}
+    <div class="part-number">Part #{{ part.part_id }}</div>
+    <div class="part-title">{{ part.name or part.part_id }}</div>
+    {% if part.category %}
+    <div class="part-category-line">
+      {{ part.category }}{% if part.subcategory %} › {{ part.subcategory }}{% endif %}
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="status-section">
+    <div class="status-badge">✓ In your collection</div>
     {% if part.location %}
-    <div class="location-big">{{ part.storage_code or part.location }}</div>
+    <div class="location-code">{{ part.storage_code or part.location }}</div>
     {% if part.storage_name %}
-    <div class="status-sub">{{ part.storage_name }}</div>
+    <div class="location-name">{{ part.storage_name }}</div>
     {% endif %}
     {% if part.overflow %}
     {% for o in part.overflow %}
@@ -36,12 +37,13 @@
     {% endfor %}
     {% endif %}
     {% else %}
-    <div class="status-sub">No location recorded yet</div>
+    <div class="status-note">No location recorded yet</div>
     {% endif %}
   </div>
 
-  <div class="actions">
-    <a href="/" class="btn-primary" style="text-align:center">Scan another piece</a>
-    <a href="/library" class="btn-secondary" style="text-align:center">Browse library</a>
+  <div class="actions-section">
+    <a href="/" class="btn-primary">Scan another piece</a>
+    <a href="/library" class="btn-secondary">Browse library</a>
+    <a href="/part/{{ part.part_id }}/edit" class="btn-ghost">Edit location</a>
   </div>
 </div>

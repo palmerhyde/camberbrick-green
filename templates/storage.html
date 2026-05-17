@@ -3,108 +3,108 @@
 
 {% block content %}
 <div class="screen">
-  <header class="header">
-    <a href="/" class="back-btn">←</a>
-    <h1 class="header-title">Storage</h1>
-  </header>
+  <div class="site-header">
+    <span class="site-name">🧱 Camberbrick</span>
+  </div>
+
+  <div class="breadcrumb">
+    <a href="/">Home</a>
+    <span class="breadcrumb-sep">›</span>
+    <span class="breadcrumb-current">Storage types</span>
+  </div>
+
+  <div class="page-header">
+    <div class="page-title">Storage types</div>
+    <div class="page-subtitle">Physical containers for your parts</div>
+  </div>
 
   {% if message %}
-  <div class="status-found" style="padding:.75rem 1rem; margin-bottom:1rem;">
-    <span style="font-size:13px; color:#16a34a;">{{ message }}</span>
-  </div>
+  <div class="message-banner">{{ message }}</div>
   {% endif %}
   {% if error %}
   <div class="error-banner">{{ error }}</div>
   {% endif %}
 
-  <!-- Storage type list -->
   {% if storage_types %}
-  <div class="part-list" style="margin-bottom:2rem;">
+  <div class="storage-list">
     {% for st in storage_types %}
-    <div class="part-card" style="flex-direction:column; gap:0; padding:0; overflow:hidden;">
-
-      <!-- Summary row -->
-      <div style="display:flex; align-items:center; gap:12px; padding:.875rem 1rem;">
+    <div class="storage-card">
+      <div class="storage-card-main">
         {% if st.photo_path %}
-        <img src="/{{ st.photo_path }}" alt="{{ st.name }}"
-             style="width:52px; height:52px; object-fit:cover; border-radius:8px; flex-shrink:0;">
+        <img src="/{{ st.photo_path }}" alt="{{ st.name }}" class="storage-thumb">
         {% else %}
-        <div style="width:52px; height:52px; background:#f0f0f0; border-radius:8px; flex-shrink:0;
-                    display:flex; align-items:center; justify-content:center; font-size:24px;">📦</div>
+        <div class="storage-thumb-fallback">📦</div>
         {% endif %}
-        <div style="flex:1; min-width:0;">
-          <div style="font-size:15px; font-weight:600; color:#111;">{{ st.name }}</div>
+        <div class="storage-info">
+          <div class="storage-name">
+            {% if st.code %}<strong>{{ st.code }}</strong> — {% endif %}{{ st.name }}
+          </div>
           {% if st.notes %}
-          <div style="font-size:12px; color:#777; margin-top:2px;">{{ st.notes }}</div>
+          <div class="storage-notes">{{ st.notes }}</div>
           {% endif %}
           {% if st.purchase_url %}
-          <a href="{{ st.purchase_url }}" target="_blank"
-             style="font-size:12px; color:#0066cc; margin-top:2px; display:block;">Buy more ↗</a>
+          <a href="{{ st.purchase_url }}" target="_blank" class="storage-buy">Buy more ↗</a>
           {% endif %}
         </div>
-        <button onclick="toggleEdit({{ st.id }})"
-                style="background:none;border:none;color:#999;font-size:13px;cursor:pointer;padding:4px 8px;">
-          Edit
-        </button>
+        <button onclick="toggleEdit({{ st.id }})" class="storage-edit-btn">Edit</button>
       </div>
 
       <!-- Edit form (hidden by default) -->
-      <div id="edit-{{ st.id }}" style="display:none; border-top:1px solid #f0f0f0; padding:1rem;">
-        <form method="post" action="/storage/{{ st.id }}/edit">
-          <label class="field-label">Name</label>
-          <input class="field-input" name="name" value="{{ st.name }}" required>
-          <label class="field-label">Short code</label>
-          <input class="field-input" name="code" value="{{ st.code or '' }}"
-                 placeholder="e.g. AL" maxlength="6"
-                 style="text-transform:uppercase; max-width:120px;">
-          <label class="field-label">Purchase URL</label>
-          <input class="field-input" name="purchase_url" type="url"
-                 value="{{ st.purchase_url or '' }}" placeholder="https://…">
-          <label class="field-label">Notes</label>
-          <input class="field-input" name="notes" value="{{ st.notes or '' }}"
-                 placeholder="Optional notes">
-          <div style="display:flex; gap:8px;">
-            <button type="submit" class="btn-primary" style="flex:1;">Save</button>
-            <button type="button" onclick="toggleEdit({{ st.id }})"
-                    class="btn-secondary" style="flex:1;">Cancel</button>
-          </div>
-        </form>
+      <div id="edit-{{ st.id }}" style="display:none;">
+        <div class="storage-form-area">
+          <form method="post" action="/storage/{{ st.id }}/edit">
+            <label class="field-label">Name</label>
+            <input class="field-input" name="name" value="{{ st.name }}" required>
+            <label class="field-label">Short code</label>
+            <input class="field-input" name="code" value="{{ st.code or '' }}"
+                   placeholder="e.g. AL" maxlength="6"
+                   style="text-transform:uppercase; max-width:120px;">
+            <label class="field-label">Purchase URL</label>
+            <input class="field-input" name="purchase_url" type="url"
+                   value="{{ st.purchase_url or '' }}" placeholder="https://…">
+            <label class="field-label">Notes</label>
+            <input class="field-input" name="notes" value="{{ st.notes or '' }}"
+                   placeholder="Optional notes">
+            <div style="display:flex; gap:8px;">
+              <button type="submit" class="btn-primary" style="flex:1; margin-bottom:0;">Save</button>
+              <button type="button" onclick="toggleEdit({{ st.id }})"
+                      class="btn-secondary" style="flex:1; margin-bottom:0;">Cancel</button>
+            </div>
+          </form>
 
-        <!-- Photo upload -->
-        <form method="post" action="/storage/{{ st.id }}/photo"
-              enctype="multipart/form-data" style="margin-top:1rem;">
-          <label class="field-label">Photo</label>
-          <div style="display:flex; gap:8px; align-items:center;">
-            <input type="file" name="photo" accept="image/*"
-                   style="flex:1; font-size:13px; color:#555;">
-            <button type="submit" class="manual-btn">Upload</button>
-          </div>
-        </form>
+          <!-- Photo upload -->
+          <form method="post" action="/storage/{{ st.id }}/photo"
+                enctype="multipart/form-data" style="margin-top:1.25rem;">
+            <label class="field-label">Photo</label>
+            <div style="display:flex; gap:8px; align-items:center;">
+              <input type="file" name="photo" accept="image/*"
+                     style="flex:1; font-size:13px; color:#555;">
+              <button type="submit" class="manual-btn">Upload</button>
+            </div>
+          </form>
 
-        <!-- Delete -->
-        <form method="post" action="/storage/{{ st.id }}/delete" style="margin-top:1rem;">
-          <button type="submit" class="btn-ghost"
-                  style="color:#dc2626; font-size:13px;"
-                  onclick="return confirm('Delete {{ st.name }}?')">
-            Delete this storage type
-          </button>
-        </form>
+          <!-- Delete -->
+          <form method="post" action="/storage/{{ st.id }}/delete" style="margin-top:1.25rem;">
+            <button type="submit" class="btn-ghost" style="color:#e53e3e; font-size:13px;"
+                    onclick="return confirm('Delete {{ st.name }}?')">
+              Delete this storage type
+            </button>
+          </form>
+        </div>
       </div>
-
     </div>
     {% endfor %}
   </div>
   {% else %}
-  <div class="empty">No storage types yet — add one below.</div>
+  <div class="empty-state">No storage types yet — add one below.</div>
   {% endif %}
 
   <!-- Add new -->
-  <div style="border-top:1px solid #eee; padding-top:1.5rem;">
-    <p style="font-size:13px; font-weight:600; color:#555; text-transform:uppercase;
-               letter-spacing:.04em; margin-bottom:1rem;">Add storage type</p>
+  <div class="add-section">
+    <div class="add-section-label">Add storage type</div>
     <form method="post" action="/storage/add">
       <label class="field-label">Name</label>
-      <input class="field-input" name="name" placeholder="e.g. Acro Mills large" required>
+      <input class="field-input" name="name" placeholder="e.g. Akro-Mils 64-drawer" required>
       <label class="field-label">Short code (optional)</label>
       <input class="field-input" name="code" placeholder="e.g. AL" maxlength="6"
              style="text-transform:uppercase; max-width:120px;">

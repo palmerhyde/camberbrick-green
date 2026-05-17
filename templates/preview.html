@@ -3,45 +3,253 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <title>Camberbrick Green</title>
+  <title>Camberbrick Green — Preview</title>
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-  <div class="shell">
-    <div class="screen">
+<div class="shell">
 
-      <div class="error-banner" style="font-size:12px; margin-bottom:1rem;">
-        ⚠️ Preview mode — UI only. For full functionality run:
-        <code style="display:block; margin-top:4px; font-size:11px;">
-          .venv/bin/uvicorn main:app --reload --host 0.0.0.0 --port 8000
-        </code>
+  <!-- ── SCAN SCREEN ── -->
+  <div class="screen" style="border-bottom:2px dashed #ddd;">
+    <div class="site-header">
+      <span class="site-name">🧱 Camberbrick</span>
+      <div class="site-header-links">
+        <a href="#" class="site-header-link">Library</a>
+        <a href="#" class="site-header-link">Storage</a>
       </div>
-
-      <header class="header">
-        <span class="header-icon">🧱</span>
-        <h1 class="header-title">Camberbrick Green</h1>
-      </header>
-
+    </div>
+    <div class="page-content">
       <div class="upload-zone">
         <div class="upload-icon">📷</div>
         <p class="upload-primary">Tap to photograph a piece</p>
         <p class="upload-secondary">Point camera at the LEGO part</p>
       </div>
-
       <div class="divider-row">
         <span class="divider-line"></span>
-        <span class="divider-text">or</span>
+        <span class="divider-text">or enter part number</span>
         <span class="divider-line"></span>
       </div>
-
       <div class="manual-row">
         <input class="manual-input" type="text" placeholder="e.g. 3001">
         <button class="manual-btn">Look up</button>
       </div>
-
-      <a href="#" class="link-btn">Browse your library</a>
-
     </div>
   </div>
+
+  <!-- ── CANDIDATES SCREEN ── -->
+  <div class="screen" style="border-bottom:2px dashed #ddd;">
+    <div class="site-header">
+      <span class="site-name">🧱 Camberbrick</span>
+    </div>
+    <div class="breadcrumb">
+      <a href="#">Home</a>
+      <span class="breadcrumb-sep">›</span>
+      <span class="breadcrumb-current">Identify piece</span>
+    </div>
+    <div class="page-header">
+      <div class="page-title">Which piece is this?</div>
+      <div class="page-subtitle">Tap the best match</div>
+    </div>
+    <div class="candidate-list">
+      <div class="candidate-card">
+        <div class="candidate-img-fallback">🧱</div>
+        <div class="candidate-info">
+          <div class="candidate-part-num">#3001</div>
+          <div class="candidate-name">Brick 2 x 4</div>
+          <div class="candidate-score">94% match</div>
+        </div>
+        <span class="candidate-chevron">›</span>
+      </div>
+      <div class="candidate-card">
+        <div class="candidate-img-fallback">🧱</div>
+        <div class="candidate-info">
+          <div class="candidate-part-num">#3002</div>
+          <div class="candidate-name">Brick 2 x 3</div>
+          <div class="candidate-score">61% match</div>
+        </div>
+        <span class="candidate-chevron">›</span>
+      </div>
+      <div class="candidate-card">
+        <div class="candidate-img-fallback">🧱</div>
+        <div class="candidate-info">
+          <div class="candidate-part-num">#3003</div>
+          <div class="candidate-name">Brick 2 x 2</div>
+          <div class="candidate-score">38% match</div>
+        </div>
+        <span class="candidate-chevron">›</span>
+      </div>
+    </div>
+    <div class="actions-section">
+      <a href="#" class="btn-ghost">None of these — try again</a>
+    </div>
+  </div>
+
+  <!-- ── RESULT (found) ── -->
+  <div class="screen" style="border-bottom:2px dashed #ddd;">
+    <div class="site-header">
+      <span class="site-name">🧱 Camberbrick</span>
+    </div>
+    <div class="breadcrumb">
+      <a href="#">Home</a>
+      <span class="breadcrumb-sep">›</span>
+      <span class="breadcrumb-current">Brick 2 x 4</span>
+    </div>
+    <div class="part-hero">
+      <div class="part-hero-img-fallback">🧱</div>
+      <div class="part-number">Part #3001</div>
+      <div class="part-title">Brick 2 x 4</div>
+      <div class="part-category-line">Basic › Brick</div>
+    </div>
+    <div class="status-section">
+      <div class="status-badge">✓ In your collection</div>
+      <div class="location-code">AL</div>
+      <div class="location-name">Akro-Mils 64-drawer</div>
+    </div>
+    <div class="actions-section">
+      <a href="#" class="btn-primary">Scan another piece</a>
+      <a href="#" class="btn-secondary">Browse library</a>
+      <a href="#" class="btn-ghost">Edit location</a>
+    </div>
+  </div>
+
+  <!-- ── RESULT (not found) ── -->
+  <div class="screen" style="border-bottom:2px dashed #ddd;">
+    <div class="site-header">
+      <span class="site-name">🧱 Camberbrick</span>
+    </div>
+    <div class="breadcrumb">
+      <a href="#">Home</a>
+      <span class="breadcrumb-sep">›</span>
+      <span class="breadcrumb-current">Plate 1 x 2</span>
+    </div>
+    <div class="part-hero">
+      <div class="part-hero-img-fallback">🧱</div>
+      <div class="part-number">Part #3023</div>
+      <div class="part-title">Plate 1 x 2</div>
+      <div class="part-category-line">Basic › Plate</div>
+    </div>
+    <div class="status-section">
+      <div class="status-badge new">⊕ Not in your collection</div>
+      <div class="status-note">Add it to record where to store it</div>
+    </div>
+    <div class="add-form-section">
+      <label class="field-label">Storage location</label>
+      <select class="field-input">
+        <option>Choose storage…</option>
+        <option>Akro-Mils 64-drawer</option>
+        <option>Shoe box</option>
+      </select>
+      <button class="btn-primary">Add to collection</button>
+      <a href="#" class="btn-ghost">Skip</a>
+    </div>
+  </div>
+
+  <!-- ── ADDED confirmation ── -->
+  <div class="screen" style="border-bottom:2px dashed #ddd;">
+    <div class="site-header">
+      <span class="site-name">🧱 Camberbrick</span>
+    </div>
+    <div class="breadcrumb">
+      <a href="#">Home</a>
+      <span class="breadcrumb-sep">›</span>
+      <span class="breadcrumb-current">Added</span>
+    </div>
+    <div class="confirmation-section">
+      <div class="confirmation-check">✓</div>
+      <div class="confirmation-label">Added to collection</div>
+      <div class="confirmation-code">AL</div>
+      <div class="confirmation-name">Plate 1 x 2</div>
+    </div>
+    <div class="actions-section">
+      <a href="#" class="btn-primary">Scan another piece</a>
+      <a href="#" class="btn-secondary">Browse library</a>
+    </div>
+  </div>
+
+  <!-- ── LIBRARY — category index ── -->
+  <div class="screen" style="border-bottom:2px dashed #ddd;">
+    <div class="site-header">
+      <span class="site-name">🧱 Camberbrick</span>
+      <div class="site-header-links"><a href="#" class="site-header-link">Storage</a></div>
+    </div>
+    <div class="breadcrumb">
+      <a href="#">Home</a><span class="breadcrumb-sep">›</span>
+      <span class="breadcrumb-current">Library</span>
+    </div>
+    <div class="page-header">
+      <div class="page-title">Browse by category</div>
+      <div class="page-subtitle">Brick Architect taxonomy</div>
+    </div>
+    <div class="category-grid">
+      <a href="#" class="category-card"><div class="category-card-name">Basic</div><div class="category-card-count has-parts">47 parts</div></a>
+      <a href="#" class="category-card"><div class="category-card-name">Wall</div><div class="category-card-count">—</div></a>
+      <a href="#" class="category-card"><div class="category-card-name">SNOT</div><div class="category-card-count has-parts">8 parts</div></a>
+      <a href="#" class="category-card"><div class="category-card-name">Angle</div><div class="category-card-count">—</div></a>
+      <a href="#" class="category-card"><div class="category-card-name">Curve</div><div class="category-card-count">—</div></a>
+      <a href="#" class="category-card"><div class="category-card-name">Articulation</div><div class="category-card-count has-parts">3 parts</div></a>
+      <a href="#" class="category-card"><div class="category-card-name">Minifig</div><div class="category-card-count">—</div></a>
+      <a href="#" class="category-card"><div class="category-card-name">Nature</div><div class="category-card-count">—</div></a>
+      <a href="#" class="category-card"><div class="category-card-name">Vehicle</div><div class="category-card-count">—</div></a>
+      <a href="#" class="category-card"><div class="category-card-name">Technic</div><div class="category-card-count">—</div></a>
+      <a href="#" class="category-card"><div class="category-card-name">Electronics</div><div class="category-card-count">—</div></a>
+      <a href="#" class="category-card"><div class="category-card-name">DUPLO</div><div class="category-card-count">—</div></a>
+    </div>
+  </div>
+
+  <!-- ── LIBRARY — subcategory list ── -->
+  <div class="screen" style="border-bottom:2px dashed #ddd;">
+    <div class="site-header"><span class="site-name">🧱 Camberbrick</span></div>
+    <div class="breadcrumb">
+      <a href="#">Home</a><span class="breadcrumb-sep">›</span>
+      <a href="#">Library</a><span class="breadcrumb-sep">›</span>
+      <span class="breadcrumb-current">Basic</span>
+    </div>
+    <div class="page-header">
+      <div class="page-title">Basic</div>
+      <div class="page-subtitle">47 parts in your collection</div>
+    </div>
+    <div class="subcat-list">
+      <a href="#" class="subcat-row"><span class="subcat-name">Brick</span><span class="subcat-right"><span class="subcat-count">23</span><span class="subcat-chevron">›</span></span></a>
+      <a href="#" class="subcat-row"><span class="subcat-name">Plate</span><span class="subcat-right"><span class="subcat-count">15</span><span class="subcat-chevron">›</span></span></a>
+      <a href="#" class="subcat-row"><span class="subcat-name">Tile</span><span class="subcat-right"><span class="subcat-count">9</span><span class="subcat-chevron">›</span></span></a>
+      <a href="#" class="subcat-row"><span class="subcat-name">Slope</span><span class="subcat-right"><span class="subcat-count">—</span><span class="subcat-chevron">›</span></span></a>
+      <a href="#" class="subcat-row"><span class="subcat-name">Wedge</span><span class="subcat-right"><span class="subcat-count">—</span><span class="subcat-chevron">›</span></span></a>
+    </div>
+  </div>
+
+  <!-- ── LIBRARY — part grid ── -->
+  <div class="screen" style="border-bottom:2px dashed #ddd;">
+    <div class="site-header"><span class="site-name">🧱 Camberbrick</span></div>
+    <div class="breadcrumb">
+      <a href="#">Home</a><span class="breadcrumb-sep">›</span>
+      <a href="#">Library</a><span class="breadcrumb-sep">›</span>
+      <a href="#">Basic</a><span class="breadcrumb-sep">›</span>
+      <span class="breadcrumb-current">Brick</span>
+    </div>
+    <div class="page-header">
+      <div class="page-title">Brick</div>
+      <div class="page-subtitle">23 parts</div>
+    </div>
+    <div class="part-grid">
+      <a href="#" class="part-grid-card">
+        <div class="part-grid-img-wrap"><span class="part-grid-img-fallback">🧱</span><span class="part-grid-storage">AL</span></div>
+        <div class="part-grid-num">#3001</div><div class="part-grid-name">Brick 2 x 4</div>
+      </a>
+      <a href="#" class="part-grid-card">
+        <div class="part-grid-img-wrap"><span class="part-grid-img-fallback">🧱</span><span class="part-grid-storage">AL</span></div>
+        <div class="part-grid-num">#3002</div><div class="part-grid-name">Brick 2 x 3</div>
+      </a>
+      <a href="#" class="part-grid-card">
+        <div class="part-grid-img-wrap"><span class="part-grid-img-fallback">🧱</span><span class="part-grid-storage">AS</span></div>
+        <div class="part-grid-num">#3003</div><div class="part-grid-name">Brick 2 x 2</div>
+      </a>
+      <a href="#" class="part-grid-card">
+        <div class="part-grid-img-wrap"><span class="part-grid-img-fallback">🧱</span></div>
+        <div class="part-grid-num">#3004</div><div class="part-grid-name">Brick 1 x 2</div>
+      </a>
+    </div>
+  </div>
+
+</div>
 </body>
 </html>

@@ -90,19 +90,33 @@ def init_db() -> None:
     if "code" not in st_cols:
         conn.execute("ALTER TABLE storage_types ADD COLUMN code TEXT")
 
-    _seed_demo_data(conn)
+    _seed_storage_types(conn)
+    _seed_taxonomy(conn)
     conn.commit()
     conn.close()
 
 
-def _seed_demo_data(conn: sqlite3.Connection) -> None:
-    """
-    Pre-seed storage types, demo parts, and locations.
-    Uses INSERT OR IGNORE so re-runs are safe.
-    """
-    # Seed storage types
-    # Only seed storage types when the table is completely empty.
-    # Once the user has added or renamed anything, never touch this table on startup.
+# Full Brick Architect taxonomy — 12 top-level categories with subcategories.
+# Names must match BA's breadcrumb anchor text exactly so the scraper can map parts.
+_BA_TAXONOMY: dict[str, list[str]] = {
+    "Basic":        ["Brick", "Plate", "Tile", "Slope", "Wedge",
+                     "Round", "Arch", "Modified Brick", "Modified Plate", "Modified Tile"],
+    "Wall":         ["Panel", "Window", "Door", "Fence"],
+    "SNOT":         ["Bracket", "Modified Brick", "Modified Plate"],
+    "Angle":        ["Hinge", "Turntable", "Swivel Plate"],
+    "Curve":        ["Arch", "Dome", "Cylinder"],
+    "Articulation": ["Ball Joint", "Bar & Clip", "Tow Ball", "Pin & Connector"],
+    "Minifig":      ["Head", "Torso", "Leg", "Accessory", "Hair & Hat", "Visor & Helmet"],
+    "Nature":       ["Plant", "Animal", "Rock & Ground"],
+    "Vehicle":      ["Wheel & Tyre", "Axle & Mudguard", "Cockpit & Windscreen", "Hull & Body"],
+    "Technic":      ["Beam", "Connector", "Gear", "Pin & Axle", "Panel & Plate"],
+    "Electronics":  ["Brick & Hub", "Light", "Motor & Servo"],
+    "DUPLO":        ["Brick", "Figure", "Animal & Nature", "Vehicle & Accessory"],
+}
+
+
+def _seed_storage_types(conn: sqlite3.Connection) -> None:
+    """Seed default storage types once — never overwrites user data."""
     if conn.execute("SELECT COUNT(*) FROM storage_types").fetchone()[0] == 0:
         defaults = [
             ("Akro-Mils 64-drawer", "AL", 1),
@@ -117,75 +131,16 @@ def _seed_demo_data(conn: sqlite3.Connection) -> None:
                 (name, code, order),
             )
 
-    # Seed categories
-    conn.execute("INSERT OR IGNORE INTO categories (name) VALUES ('Basic')")
-    conn.execute("INSERT OR IGNORE INTO categories (name) VALUES ('Plates')")
 
-    basic_id = conn.execute(
-        "SELECT id FROM categories WHERE name = 'Basic'"
-    ).fetchone()["id"]
-    plates_id = conn.execute(
-        "SELECT id FROM categories WHERE name = 'Plates'"
-    ).fetchone()["id"]
-
-    # Seed subcategories
-    conn.execute(
-        "INSERT OR IGNORE INTO subcategories (category_id, name) VALUES (?, '2× Brick')",
-        (basic_id,),
-    )
-    conn.execute(
-        "INSERT OR IGNORE INTO subcategories (category_id, name) VALUES (?, '1× Plate')",
-        (plates_id,),
-    )
-
-    brick_sub_id = conn.execute(
-        "SELECT id FROM subcategories WHERE name = '2× Brick'"
-    ).fetchone()["id"]
-    plate_sub_id = conn.execute(
-        "SELECT id FROM subcategories WHERE name = '1× Plate'"
-    ).fetchone()["id"]
-
-    # Seed locations
-    conn.execute(
-        "INSERT OR IGNORE INTO locations (code, type, description) VALUES ('A3', 'akro_drawer', 'Akro-Mils drawer A3')"
-    )
-    conn.execute(
-        "INSERT OR IGNORE INTO locations (code, type, description) VALUES ('B7', 'akro_drawer', 'Akro-Mils drawer B7')"
-    )
-
-    a3_id = conn.execute(
-        "SELECT id FROM locations WHERE code = 'A3'"
-    ).fetchone()["id"]
-    b7_id = conn.execute(
-        "SELECT id FROM locations WHERE code = 'B7'"
-    ).fetchone()["id"]
-
-    # Seed parts
-    conn.execute("""
-        INSERT OR IGNORE INTO parts (part_id, name, known_owned, img_url)
-        VALUES ('3001', '2×4 Brick', 1, NULL)
-    """)
-    conn.execute("""
-        INSERT OR IGNORE INTO parts (part_id, name, known_owned, img_url)
-        VALUES ('3710', '1×4 Plate', 1, NULL)
-    """)
-
-    # Seed part → category mappings
-    conn.execute("""
-        INSERT OR IGNORE INTO part_categories (part_id, category_id, subcategory_id)
-        VALUES ('3001', ?, ?)
-    """, (basic_id, brick_sub_id))
-    conn.execute("""
-        INSERT OR IGNORE INTO part_categories (part_id, category_id, subcategory_id)
-        VALUES ('3710', ?, ?)
-    """, (plates_id, plate_sub_id))
-
-    # Seed part → location mappings
-    conn.execute("""
-        INSERT OR IGNORE INTO part_locations (part_id, location_id, role, qty)
-        VALUES ('3001', ?, 'primary', 47)
-    """, (a3_id,))
-    conn.execute("""
-        INSERT OR IGNORE INTO part_locations (part_id, location_id, role, qty)
-        VALUES ('3710', ?, 'primary', 12)
-    """, (b7_id,))
+def _seed_taxonomy(conn: sqlite3.Connection) -> None:
+    """Seed the full BA taxonomy into categories / subcategories. Safe to re-run."""
+    for cat_name, subcats in _BA_TAXONOMY.items():
+        conn.execute("INSERT OR IGNORE INTO categories (name) VALUES (?)", (cat_name,))
+        cat_id = conn.execute(
+            "SELECT id FROM categories WHERE name = ?", (cat_name,)
+        ).fetchone()["id"]
+        for sub_name in subcats:
+            conn.execute(
+                "INSERT OR IGNORE INTO subcategories (category_id, name) VALUES (?, ?)",
+                (cat_id, sub_name),
+            )

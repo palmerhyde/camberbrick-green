@@ -1,10 +1,18 @@
 <div class="screen">
-  <header class="header">
-    <a href="/" class="back-btn">←</a>
-    <h1 class="header-title">Which piece is this?</h1>
-  </header>
+  <div class="site-header">
+    <span class="site-name">🧱 Camberbrick</span>
+  </div>
 
-  <p class="subtitle">Tap the best match below</p>
+  <div class="breadcrumb">
+    <a href="/">Home</a>
+    <span class="breadcrumb-sep">›</span>
+    <span class="breadcrumb-current">Identify piece</span>
+  </div>
+
+  <div class="page-header">
+    <div class="page-title">Which piece is this?</div>
+    <div class="page-subtitle">Tap the best match</div>
+  </div>
 
   <div class="candidate-list">
     {% for item in items %}
@@ -22,13 +30,13 @@
         <div class="candidate-img-fallback">🧱</div>
         {% endif %}
         <div class="candidate-info">
-          <div class="candidate-id">#{{ item.id }}</div>
+          <div class="candidate-part-num">#{{ item.id }}</div>
           <div class="candidate-name">{{ item.name or item.id }}</div>
           {% if item.score is defined and item.score %}
           <div class="candidate-score">{{ (item.score * 100) | round | int }}% match</div>
           {% endif %}
         </div>
-        <span style="color:#ccc; font-size:20px">›</span>
+        <span class="candidate-chevron">›</span>
       </button>
     </form>
     {% endfor %}
@@ -39,5 +47,7 @@
     <p class="loading-text">Checking your collection…</p>
   </div>
 
-  <a href="/" class="btn-ghost">None of these — try again</a>
+  <div class="actions-section">
+    <a href="/" class="btn-ghost">None of these — try again</a>
+  </div>
 </div>

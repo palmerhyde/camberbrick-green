@@ -1,18 +1,23 @@
 <div class="screen">
-  <header class="header">
-    <a href="/" class="back-btn">←</a>
-    <h1 class="header-title">Camberbrick Green</h1>
-  </header>
-
-  <div class="status-found" style="text-align:center; padding: 2rem 1.25rem; margin-bottom: 1.5rem;">
-    <div style="font-size: 52px; margin-bottom: 0.5rem;">✓</div>
-    <div class="status-label">Added to collection</div>
-    <div class="location-big">{{ location }}</div>
-    <div class="status-sub">{{ name }}</div>
+  <div class="site-header">
+    <span class="site-name">🧱 Camberbrick</span>
   </div>
 
-  <div class="actions">
-    <a href="/" class="btn-primary" style="text-align:center">Scan another piece</a>
-    <a href="/library" class="btn-secondary" style="text-align:center">Browse library</a>
+  <div class="breadcrumb">
+    <a href="/">Home</a>
+    <span class="breadcrumb-sep">›</span>
+    <span class="breadcrumb-current">Added</span>
+  </div>
+
+  <div class="confirmation-section">
+    <div class="confirmation-check">✓</div>
+    <div class="confirmation-label">Added to collection</div>
+    <div class="confirmation-code">{{ location }}</div>
+    <div class="confirmation-name">{{ name }}</div>
+  </div>
+
+  <div class="actions-section">
+    <a href="/" class="btn-primary">Scan another piece</a>
+    <a href="/library" class="btn-secondary">Browse library</a>
   </div>
 </div>

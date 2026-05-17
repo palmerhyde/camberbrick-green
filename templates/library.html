@@ -3,53 +3,33 @@
 
 {% block content %}
 <div class="screen">
-  <header class="header">
-    <a href="/" class="back-btn">←</a>
-    <h1 class="header-title">Library</h1>
-  </header>
-
-  <p class="subtitle">
-    {{ parts | length }} part{% if parts | length != 1 %}s{% endif %} in your collection
-  </p>
-
-  {% if parts %}
-  <div class="part-list">
-    {% for p in parts %}
-    <div class="part-card">
-      <div style="display:flex; align-items:center; gap:10px; flex:1; min-width:0;">
-        {% if p.img_url %}
-        <img src="{{ p.img_url }}" alt="{{ p.name }}"
-             style="width:44px; height:44px; object-fit:contain; flex-shrink:0; border-radius:6px; background:#f5f5f5;">
-        {% else %}
-        <div style="width:44px; height:44px; display:flex; align-items:center; justify-content:center;
-                    font-size:24px; flex-shrink:0; background:#f5f5f5; border-radius:6px;">🧱</div>
-        {% endif %}
-        <div style="min-width:0;">
-          <div class="part-name" style="font-size:15px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-            {{ p.name or p.part_id }}
-          </div>
-          <div class="part-id">#{{ p.part_id }}</div>
-          {% if p.category %}
-          <div class="part-category" style="font-size:12px; margin-top:2px;">
-            {{ p.category }}{% if p.subcategory %} › {{ p.subcategory }}{% endif %}
-          </div>
-          {% endif %}
-        </div>
-      </div>
-      <div class="part-meta" style="display:flex; flex-direction:column; align-items:flex-end; gap:4px;">
-        {% if p.location %}
-        <div class="part-qty">{{ p.storage_code or p.location }}</div>
-        {% else %}
-        <div class="part-location" style="color:#ccc;">—</div>
-        {% endif %}
-        <a href="/part/{{ p.part_id }}/edit"
-           style="font-size:12px; color:#0066cc; margin-top:2px;">Edit</a>
-      </div>
+  <div class="site-header">
+    <span class="site-name">🧱 Camberbrick</span>
+    <div class="site-header-links">
+      <a href="/storage" class="site-header-link">Storage</a>
     </div>
+  </div>
+
+  <div class="breadcrumb">
+    <a href="/">Home</a>
+    <span class="breadcrumb-sep">›</span>
+    <span class="breadcrumb-current">Library</span>
+  </div>
+
+  <div class="page-header">
+    <div class="page-title">Browse by category</div>
+    <div class="page-subtitle">Brick Architect taxonomy</div>
+  </div>
+
+  <div class="category-grid">
+    {% for cat in categories %}
+    <a href="/library/{{ cat.slug }}" class="category-card">
+      <div class="category-card-name">{{ cat.name }}</div>
+      <div class="category-card-count {% if cat.count > 0 %}has-parts{% endif %}">
+        {% if cat.count == 1 %}1 part{% elif cat.count > 1 %}{{ cat.count }} parts{% else %}—{% endif %}
+      </div>
+    </a>
     {% endfor %}
   </div>
-  {% else %}
-  <div class="empty">No parts yet — scan your first piece!</div>
-  {% endif %}
 </div>
 {% endblock %}

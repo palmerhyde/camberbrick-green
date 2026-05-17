@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}{{ cat_name }} — Library — Camberbrick Green{% endblock %}
+
+{% block content %}
+<div class="screen">
+  <div class="site-header">
+    <span class="site-name">🧱 Camberbrick</span>
+  </div>
+
+  <div class="breadcrumb">
+    <a href="/">Home</a>
+    <span class="breadcrumb-sep">›</span>
+    <a href="/library">Library</a>
+    <span class="breadcrumb-sep">›</span>
+    <span class="breadcrumb-current">{{ cat_name }}</span>
+  </div>
+
+  <div class="page-header">
+    <div class="page-title">{{ cat_name }}</div>
+    <div class="page-subtitle">
+      {% if total == 1 %}1 part in your collection
+      {% elif total > 0 %}{{ total }} parts in your collection
+      {% else %}No parts yet{% endif %}
+    </div>
+  </div>
+
+  {% if subcategories %}
+  <div class="subcat-list">
+    {% for sub in subcategories %}
+    <a href="/library/{{ cat_slug }}/{{ sub.slug }}" class="subcat-row">
+      <span class="subcat-name">{{ sub.name }}</span>
+      <span class="subcat-right">
+        <span class="subcat-count">
+          {% if sub.count %}{{ sub.count }}{% else %}—{% endif %}
+        </span>
+        <span class="subcat-chevron">›</span>
+      </span>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">No subcategories defined.</div>
+  {% endif %}
+</div>
+{% endblock %}
