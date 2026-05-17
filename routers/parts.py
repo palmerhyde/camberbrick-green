@@ -83,14 +83,34 @@ async def part_detail(request: Request, part_id: str):
     img_url = (part or {}).get("img_url") or rb.get("img_url") or ""
     category = ba_cat  # BrickArchitect only — never Rebrickable
 
-    # Cache img_url into DB if we fetched it from Rebrickable but it's missing locally
-    if img_url and part and not (part or {}).get("img_url"):
+    # Cache img_url and BA category assignment into DB whenever we have fresh data
+    if img_url or ba_cat:
         try:
             conn2 = get_db()
-            conn2.execute(
-                "UPDATE parts SET img_url = ? WHERE part_id = ?",
-                (img_url, part_id)
-            )
+            if img_url and not (part or {}).get("img_url"):
+                conn2.execute(
+                    "UPDATE parts SET img_url = ? WHERE part_id = ?",
+                    (img_url, part_id)
+                )
+            # Save BA category → subcategory assignment (levels 1 and 2 of breadcrumb)
+            if ba_cat:
+                # breadcrumb is e.g. "Basic › Brick › 2× Brick" — we only use levels 1+2
+                levels = [p.strip() for p in ba_cat.split(" › ")]
+                if len(levels) >= 2:
+                    cat_name, sub_name = levels[0], levels[1]
+                    cat_row = conn2.execute(
+                        "SELECT id FROM categories WHERE name = ?", (cat_name,)
+                    ).fetchone()
+                    if cat_row:
+                        sub_row = conn2.execute(
+                            "SELECT id FROM subcategories WHERE category_id = ? AND name = ?",
+                            (cat_row["id"], sub_name)
+                        ).fetchone()
+                        if sub_row:
+                            conn2.execute(
+                                "INSERT OR IGNORE INTO part_categories (part_id, category_id, subcategory_id) VALUES (?, ?, ?)",
+                                (part_id, cat_row["id"], sub_row["id"])
+                            )
             conn2.commit()
             conn2.close()
         except Exception:
