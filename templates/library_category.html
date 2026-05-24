@@ -60,8 +60,9 @@
       <div class="part-scale-view">
         {% for p in group.parts %}
         <a href="/part/{{ p.part_id }}" class="part-scale-card">
+          {% set img_part_id = p.alt_part_id if p.alt_part_id else p.part_id %}
           <img class="part-scale-img"
-               src="https://brickarchitect.com/content/cache/parts/normal/50/{{ p.part_id }}.png"
+               src="https://brickarchitect.com/content/cache/parts/normal/50/{{ img_part_id }}.png"
                alt="{{ p.name or p.part_id }}"
                loading="lazy"
                onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">

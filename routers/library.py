@@ -143,7 +143,7 @@ async def library_category(request: Request, cat_slug: str):
 
         rows = conn.execute("""
             SELECT
-                p.part_id, p.name, p.img_url,
+                p.part_id, p.name, p.img_url, p.alt_part_id,
                 sc.name AS subcategory_name,
                 pc.group_name,
                 COALESCE(st.code, l.code) AS storage_code
