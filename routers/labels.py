@@ -19,10 +19,15 @@ from pathlib import Path
 from typing import NamedTuple, Optional
 from xml.etree import ElementTree as ET
 
+from PIL import Image
+
 import httpx
 from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
+
+from database import get_db
+from routers.parts import get_brickarchitect_info
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
@@ -153,6 +158,74 @@ def _patch_lbx(data: bytes, spec: _LabelSpec = _DEFAULT_SPEC) -> bytes:
     return dst.getvalue()
 
 
+_PROP_XML = (
+    '<?xml version="1.0" encoding="UTF-8"?>'
+    '<meta:properties xmlns:meta="http://schemas.brother.info/ptouch/2007/lbx/meta"'
+    ' xmlns:dc="http://purl.org/dc/elements/1.1/"'
+    ' xmlns:dcterms="http://purl.org/dc/terms/">'
+    '<meta:appName>P-touch Editor</meta:appName>'
+    '<dc:title></dc:title><dc:subject></dc:subject>'
+    '<dc:creator>brickfinder</dc:creator>'
+    '<meta:keyword></meta:keyword><dc:description></dc:description>'
+    '<meta:template></meta:template>'
+    '<dcterms:created>2024-01-01T00:00:00Z</dcterms:created>'
+    '<dcterms:modified>2024-01-01T00:00:00Z</dcterms:modified>'
+    '<meta:lastPrinted></meta:lastPrinted>'
+    '<meta:modifiedBy>brickfinder</meta:modifiedBy>'
+    '<meta:revision>1</meta:revision><meta:editTime>0</meta:editTime>'
+    '<meta:numPages>1</meta:numPages><meta:numWords>0</meta:numWords>'
+    '<meta:numChars>0</meta:numChars><meta:security>0</meta:security>'
+    '</meta:properties>'
+)
+
+# label.xml template for a 12mm BA-style label (same baseline as BA originals;
+# _patch_label_xml will scale it to 24mm tape).
+# {img_w}/{img_h} are the image object dimensions in pt, derived from the actual
+# image aspect ratio so _patch_label_xml preserves it when scaling to 24mm.
+_LABEL_XML_TMPL = """\
+<?xml version="1.0" encoding="UTF-8"?><pt:document xmlns:pt="http://schemas.brother.info/ptouch/2007/lbx/main" xmlns:style="http://schemas.brother.info/ptouch/2007/lbx/style" xmlns:text="http://schemas.brother.info/ptouch/2007/lbx/text" xmlns:draw="http://schemas.brother.info/ptouch/2007/lbx/draw" xmlns:image="http://schemas.brother.info/ptouch/2007/lbx/image" xmlns:barcode="http://schemas.brother.info/ptouch/2007/lbx/barcode" xmlns:database="http://schemas.brother.info/ptouch/2007/lbx/database" xmlns:table="http://schemas.brother.info/ptouch/2007/lbx/table" xmlns:cable="http://schemas.brother.info/ptouch/2007/lbx/cable" version="1.7" generator="P-touch Editor 5.4.014 Windows"><pt:body currentSheet="Sheet 1" direction="LTR"><style:sheet name="Sheet 1"><style:paper media="0" width="33.6pt" height="850pt" marginLeft="4pt" marginTop="5.6pt" marginRight="4pt" marginBottom="5.6pt" orientation="landscape" autoLength="true" monochromeDisplay="true" printColorDisplay="false" printColorsID="0" paperColor="#FFFFFF" paperInk="#000000" split="1" format="259" backgroundTheme="0" printerID="22832" printerName="Brother PT-1230PC"/><style:cutLine regularCut="0pt" freeCut=""/><style:backGround x="5.6pt" y="4pt" width="67pt" height="25.6pt" brushStyle="NULL" brushId="0" userPattern="NONE" userPatternId="0" color="#000000" printColorNumber="1" backColor="#FFFFFF" backPrintColorNumber="0"/><pt:objects><text:text><pt:objectStyle x="44.971pt" y="4pt" width="200pt" height="25.6pt" backColor="#FFFFFF" backPrintColorNumber="0" ropMode="COPYPEN" angle="0" anchor="TOPLEFT" flip="NONE"><pt:pen style="NULL" widthX="0.5pt" widthY="0.5pt" color="#000000" printColorNumber="1"/><pt:brush style="NULL" color="#000000" printColorNumber="1" id="0"/><pt:expanded objectName="Text1" ID="0" lock="0" templateMergeTarget="LABELLIST" templateMergeType="NONE" templateMergeID="0" linkStatus="NONE" linkID="0"/></pt:objectStyle><text:ptFontInfo><text:logFont name="Arial" width="0" italic="false" weight="400" charSet="0" pitchAndFamily="34"/><text:fontExt effect="NOEFFECT" underline="0" strikeout="0" size="8pt" orgSize="28.8pt" textColor="#000000" textPrintColorNumber="1"/></text:ptFontInfo><text:textControl control="FREE" clipFrame="false" aspectNormal="true" shrink="false" autoLF="false" avoidImage="false"/><text:textAlign horizontalAlignment="JUSTIFY" verticalAlignment="CENTER" inLineAlignment="BASELINE"/><text:textStyle vertical="false" nullBlock="false" charSpace="0" lineSpace="-10" orgPoint="10pt" combinedChars="false"/><pt:data>{name}
+{part_id}</pt:data><text:stringItem charLen="{name_len}"><text:ptFontInfo><text:logFont name="Arial" width="0" italic="false" weight="700" charSet="0" pitchAndFamily="34"/><text:fontExt effect="NOEFFECT" underline="0" strikeout="0" size="8pt" orgSize="28.8pt" textColor="#000000" textPrintColorNumber="1"/></text:ptFontInfo></text:stringItem><text:stringItem charLen="{id_len}"><text:ptFontInfo><text:logFont name="Arial" width="0" italic="false" weight="400" charSet="0" pitchAndFamily="34"/><text:fontExt effect="NOEFFECT" underline="0" strikeout="0" size="8pt" orgSize="28.8pt" textColor="#000000" textPrintColorNumber="1"/></text:ptFontInfo></text:stringItem></text:text><image:image><pt:objectStyle x="5.6pt" y="4pt" width="{img_w}pt" height="{img_h}pt" backColor="#FFFFFF" backPrintColorNumber="0" ropMode="COPYPEN" angle="0" anchor="TOPLEFT" flip="NONE"><pt:pen style="NULL" widthX="0.5pt" widthY="0.5pt" color="#000000" printColorNumber="1"/><pt:brush style="NULL" color="#000000" printColorNumber="1" id="0"/><pt:expanded objectName="Image1" ID="0" lock="2" templateMergeTarget="LABELLIST" templateMergeType="NONE" templateMergeID="0" linkStatus="NONE" linkID="0"/></pt:objectStyle><image:imageStyle originalName="{img_file}" alignInText="LEFT" firstMerge="true" fileName="{img_file}"><image:transparent flag="false" color="#FFFFFF"/><image:trimming flag="false" shape="RECTANGLE" trimOrgX="0pt" trimOrgY="0pt" trimOrgWidth="{img_w}pt" trimOrgHeight="{img_h}pt"/><image:orgPos x="5.6pt" y="4pt" width="{img_w}pt" height="{img_h}pt"/><image:effect effect="NONE" brightness="50" contrast="50" photoIndex="4"/><image:mono operationKind="BINARY" reverse="0" ditherKind="MESH" threshold="128" gamma="100" ditherEdge="0" rgbconvProportionRed="30" rgbconvProportionGreen="59" rgbconvProportionBlue="11" rgbconvProportionReversed="0"/></image:imageStyle></image:image></pt:objects></style:sheet></pt:body></pt:document>"""
+
+def _img_to_png(img_bytes: bytes) -> tuple[bytes, int, int]:
+    """Convert any image format to PNG. Returns (png_bytes, width_px, height_px)."""
+    img = Image.open(io.BytesIO(img_bytes)).convert("RGBA")
+    w, h = img.size
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    return buf.getvalue(), w, h
+
+
+def _build_custom_lbx(img_bytes: bytes, name: str, part_id: str, spec: _LabelSpec, alt_id: Optional[str] = None) -> bytes:
+    """Build a BA-style .lbx from scratch using the given image bytes."""
+    png_bytes, px_w, px_h = _img_to_png(img_bytes)
+
+    # Scale image to fit the 12mm baseline height (25.6pt), preserving aspect ratio.
+    # _patch_label_xml will read these dimensions and scale them correctly to 24mm.
+    BASE_H = 25.6
+    img_h = round(BASE_H, 3)
+    img_w = round(BASE_H * px_w / px_h, 3)
+
+    display_id = f"{part_id} / {alt_id}" if alt_id else part_id
+    img_file = f"{part_id}.png"
+
+    label_xml = _LABEL_XML_TMPL.format(
+        name=name,
+        part_id=display_id,
+        name_len=len(name) + 1,  # +1 for the \n between name and part_id
+        id_len=len(display_id),
+        img_w=img_w,
+        img_h=img_h,
+        img_file=img_file,
+    )
+    patched_xml = _patch_label_xml(label_xml.encode("utf-8"), spec)
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zout:
+        zout.writestr("prop.xml", _PROP_XML)
+        zout.writestr(img_file, png_bytes)
+        zout.writestr("label.xml", patched_xml)
+    return buf.getvalue()
+
+
 @router.post("/part/{part_id}/print-label", response_class=HTMLResponse)
 async def print_label(
     request: Request,
@@ -161,12 +234,42 @@ async def print_label(
 ):
     spec = _SIZE_SPECS.get(size, _DEFAULT_SPEC)
 
+    # Look up alt_part_id and img_url in case we need them as fallbacks
+    try:
+        conn = get_db()
+        row = conn.execute(
+            "SELECT alt_part_id, img_url, name FROM parts WHERE part_id = ?", (part_id,)
+        ).fetchone()
+        alt_id    = row["alt_part_id"] if row else None
+        img_url   = row["img_url"]     if row else None
+        part_name = row["name"]        if row else part_id
+        conn.close()
+    except Exception:
+        alt_id = None
+        img_url = None
+        part_name = part_id
+
+    # If there's an alt ID, prefer the BA name for it (e.g. "Helmet Mask. Royal Guards"
+    # instead of the Brickognize name "Minifigure, Headgear Helmet SW Royal Guard")
+    if alt_id:
+        try:
+            ba_name, _ = await get_brickarchitect_info(alt_id)
+            if ba_name:
+                part_name = ba_name
+        except Exception:
+            pass
+
+    def _ba_label_missing(r: httpx.Response) -> bool:
+        return r.status_code != 200 or r.content[:5] == b"ERROR"
+
     url = BA_LABEL_URL.format(part_id=part_id)
     try:
         async with httpx.AsyncClient(timeout=15) as client:
             res = await client.get(url, follow_redirects=True)
-            if res.status_code == 404:
-                # BA may redirect the HTML page to a different ID; try resolving it
+
+            # BA returns HTTP 200 with body "ERROR: Part image not found." for missing labels
+            if _ba_label_missing(res):
+                # Try resolving a redirect canonical ID from the BA HTML page
                 page = await client.get(
                     f"https://brickarchitect.com/parts/{part_id}",
                     follow_redirects=True,
@@ -177,13 +280,33 @@ async def print_label(
                         BA_LABEL_URL.format(part_id=canonical),
                         follow_redirects=True,
                     )
+
+            # Still missing — try the stored alt_part_id
+            if _ba_label_missing(res) and alt_id:
+                res = await client.get(
+                    BA_LABEL_URL.format(part_id=alt_id),
+                    follow_redirects=True,
+                )
+
     except httpx.RequestError as exc:
         return _toast(request, f"Could not reach BrickArchitect. ({exc})", error=True)
 
-    if res.status_code != 200:
-        return _toast(request, f"No label available for part {part_id}.", error=True)
-
-    patched = _patch_lbx(res.content, spec)
+    if _ba_label_missing(res):
+        # Last resort: generate a custom label from the stored part image
+        if img_url:
+            try:
+                async with httpx.AsyncClient(timeout=15) as client:
+                    img_res = await client.get(img_url, follow_redirects=True)
+                if img_res.status_code == 200:
+                    patched = _build_custom_lbx(img_res.content, part_name or part_id, part_id, spec, alt_id=alt_id)
+                else:
+                    return _toast(request, f"No label available for part {part_id}.", error=True)
+            except Exception as exc:
+                return _toast(request, f"Could not build custom label. ({exc})", error=True)
+        else:
+            return _toast(request, f"No label available for part {part_id}.", error=True)
+    else:
+        patched = _patch_lbx(res.content, spec)
     downloads = Path.home() / "Downloads"
     downloads.mkdir(exist_ok=True)
     label_path = downloads / f"brickfinder-{part_id}-{round(time.time())}.lbx"

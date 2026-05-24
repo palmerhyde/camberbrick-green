@@ -7,7 +7,7 @@ import asyncio
 import os
 import re
 import httpx
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Form, Request
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
 from dotenv import load_dotenv
@@ -94,6 +94,7 @@ async def part_detail(request: Request, part_id: str):
     cached_img    = (part or {}).get("img_url")
     cached_cat    = (part or {}).get("ba_category")
     cached_rb_cat = (part or {}).get("rb_category")  # None = never tried; "" = tried, not found
+    alt_part_id   = (part or {}).get("alt_part_id")
 
     # Treat name == part_id as "no useful name" — raw ID was stored as placeholder
     if cached_name == part_id:
@@ -119,6 +120,10 @@ async def part_detail(request: Request, part_id: str):
         called_rb = True
     else:
         rb, ba_name, ba_cat = {}, *await get_brickarchitect_info(part_id)
+
+    # If primary BA lookup found nothing and we have an alt ID, try that
+    if not ba_cat and not cached_cat and alt_part_id:
+        _, ba_cat = await get_brickarchitect_info(alt_part_id)
 
     # Prefer BA name (user-friendly) → stored name → Rebrickable name
     name        = cached_name or ba_name or rb.get("name") or part_id
@@ -198,4 +203,22 @@ async def part_detail(request: Request, part_id: str):
         "storage_types":    storage_types,
         "is_uncategorised": is_uncategorised,
         "rb_category":      rb_category,
+        "alt_part_id":      alt_part_id,
+    })
+
+
+@router.post("/part/{part_id}/set-alt-id", response_class=HTMLResponse)
+async def set_alt_part_id(request: Request, part_id: str, alt_id: str = Form("")):
+    alt_id = alt_id.strip() or None
+    conn = get_db()
+    try:
+        conn.execute("UPDATE parts SET alt_part_id = ? WHERE part_id = ?", (alt_id, part_id))
+        conn.commit()
+    finally:
+        conn.close()
+    return templates.TemplateResponse("partials/_alt_part_id.html", {
+        "request":     request,
+        "part_id":     part_id,
+        "alt_part_id": alt_id,
+        "x_prefix":    part_id.lower().startswith("x"),
     })

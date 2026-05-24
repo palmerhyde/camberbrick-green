@@ -1,0 +1,18 @@
+<div class="alt-part-id" id="alt-part-id">
+  <form hx-post="/part/{{ part_id }}/set-alt-id"
+        hx-target="#alt-part-id"
+        hx-swap="outerHTML"
+        hx-trigger="change from:input">
+    <label class="alt-part-id-label">Alt. ID</label>
+    <input class="alt-part-id-input"
+           name="alt_id"
+           value="{{ alt_part_id or '' }}"
+           placeholder="e.g. 30561"
+           autocomplete="off"
+           autocorrect="off"
+           autocapitalize="off">
+  </form>
+  {% if x_prefix and not alt_part_id %}
+  <span class="alt-part-id-hint">X-prefix part — consider adding an alt. ID</span>
+  {% endif %}
+</div>

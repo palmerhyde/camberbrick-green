@@ -39,7 +39,8 @@
          alt="{{ name }}"
          onerror="this.src='{{ img_url or '' }}';this.onerror=null">
     {% endif %}
-    <div class="part-number">Part #{{ part_id }}</div>
+    <div class="part-number">Part #{{ part_id }}{% if alt_part_id %} / {{ alt_part_id }}{% endif %}</div>
+    {% include "partials/_alt_part_id.html" %}
     <div class="part-title">{{ name or part_id }}</div>
     {% if category %}
     <div class="part-category-line">
