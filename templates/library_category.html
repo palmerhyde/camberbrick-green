@@ -16,12 +16,26 @@
   </div>
 
   <div class="page-header">
-    <div class="page-title">{{ cat_name }}</div>
-    <div class="page-subtitle">
-      {% if total == 1 %}1 part in your collection
-      {% elif total > 0 %}{{ total }} parts in your collection
-      {% else %}No parts yet{% endif %}
+    <div class="page-title">
+      <img class="page-title-icon"
+           width="22" height="22"
+           src="https://brickarchitect.com/content/part-categories/{{ cat_slug }}.svg"
+           alt=""
+           onerror="this.style.display='none'">
+      <span>{{ cat_name }}</span>
     </div>
+    <div class="page-subtitle">
+      <span>{% if total == 1 %}1 part in your collection
+      {% elif total > 0 %}{{ total }} parts in your collection
+      {% else %}No parts yet{% endif %}</span>
+      <button class="btn-cat-label"
+              hx-post="/categories/print-label/{{ cat_slug }}"
+              hx-target="#cat-label-toast"
+              hx-swap="innerHTML"
+              hx-indicator="#cat-label-spinner">Print label</button>
+      <span id="cat-label-spinner" class="htmx-indicator cat-label-spinner">⏳</span>
+    </div>
+    <div id="cat-label-toast"></div>
   </div>
 
   {% if sections %}

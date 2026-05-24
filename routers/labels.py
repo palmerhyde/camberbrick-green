@@ -13,6 +13,7 @@ Patch summary:
 import io
 import re
 import subprocess
+import time
 import zipfile
 from pathlib import Path
 from typing import NamedTuple, Optional
@@ -163,7 +164,19 @@ async def print_label(
     url = BA_LABEL_URL.format(part_id=part_id)
     try:
         async with httpx.AsyncClient(timeout=15) as client:
-            res = await client.get(url)
+            res = await client.get(url, follow_redirects=True)
+            if res.status_code == 404:
+                # BA may redirect the HTML page to a different ID; try resolving it
+                page = await client.get(
+                    f"https://brickarchitect.com/parts/{part_id}",
+                    follow_redirects=True,
+                )
+                canonical = str(page.url).rstrip("/").split("/")[-1]
+                if canonical and canonical != part_id:
+                    res = await client.get(
+                        BA_LABEL_URL.format(part_id=canonical),
+                        follow_redirects=True,
+                    )
     except httpx.RequestError as exc:
         return _toast(request, f"Could not reach BrickArchitect. ({exc})", error=True)
 
@@ -173,7 +186,7 @@ async def print_label(
     patched = _patch_lbx(res.content, spec)
     downloads = Path.home() / "Downloads"
     downloads.mkdir(exist_ok=True)
-    label_path = downloads / f"brickfinder-{part_id}.lbx"
+    label_path = downloads / f"brickfinder-{part_id}-{round(time.time())}.lbx"
     label_path.write_bytes(patched)
 
     try:

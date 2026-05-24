@@ -21,9 +21,16 @@
   <div class="category-grid">
     {% for cat in categories %}
     <a href="/parts/{{ cat.slug }}" class="category-card">
-      <div class="category-card-name">{{ cat.name }}</div>
-      <div class="category-card-count {% if cat.count > 0 %}has-parts{% endif %}">
-        {% if cat.count == 1 %}1 part{% elif cat.count > 1 %}{{ cat.count }} parts{% else %}—{% endif %}
+      <img class="category-card-icon"
+           width="52" height="52"
+           src="https://brickarchitect.com/content/part-categories/{{ cat.slug }}.svg"
+           alt=""
+           onerror="this.style.display='none'">
+      <div class="category-card-info">
+        <div class="category-card-name">{{ cat.name }}</div>
+        <div class="category-card-count {% if cat.count > 0 %}has-parts{% endif %}">
+          {% if cat.count == 1 %}1 part{% elif cat.count > 1 %}{{ cat.count }} parts{% else %}—{% endif %}
+        </div>
       </div>
     </a>
     {% endfor %}

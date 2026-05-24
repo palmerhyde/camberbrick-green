@@ -27,7 +27,8 @@ async def get_brickarchitect_info(part_id: str) -> tuple[str, str]:
     """Scrape name and category breadcrumb from BrickArchitect. Returns (name, category)."""
     try:
         async with httpx.AsyncClient(timeout=10) as client:
-            res = await client.get(f"https://brickarchitect.com/parts/{part_id}")
+            res = await client.get(f"https://brickarchitect.com/parts/{part_id}",
+                                   follow_redirects=True)
         if res.status_code != 200:
             return "", ""
         html = res.text

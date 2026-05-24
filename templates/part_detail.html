@@ -42,7 +42,16 @@
     <div class="part-number">Part #{{ part_id }}</div>
     <div class="part-title">{{ name or part_id }}</div>
     {% if category %}
-    <div class="part-category-line">{{ category }}</div>
+    <div class="part-category-line">
+      {% if not is_uncategorised and category_slugs %}
+      <img class="part-cat-icon"
+           width="14" height="14"
+           src="https://brickarchitect.com/content/part-categories/{{ category_slugs[0] }}.svg"
+           alt=""
+           onerror="this.style.display='none'">
+      {% endif %}
+      <span>{{ category }}</span>
+    </div>
     {% endif %}
     {% if is_uncategorised and rb_category %}
     <div class="part-rb-category">Rebrickable: {{ rb_category }}</div>
@@ -102,7 +111,6 @@
       <button type="submit" class="location-overflow-add-btn">+</button>
     </form>
   </div>
-  {% if not is_uncategorised %}
   <div class="part-actions">
     <div id="print-toast"></div>
     <div class="print-size-label">Print label</div>
@@ -128,7 +136,6 @@
               hx-indicator="#print-spinner">Large</button>
     </div>
   </div>
-  {% endif %}
 
   {% else %}
   <div class="status-section">
@@ -159,7 +166,6 @@
     </form>
     <a href="/" class="btn-ghost">Skip</a>
   </div>
-  {% if not is_uncategorised %}
   <div class="part-actions part-actions--solo">
     <div id="print-toast"></div>
     <div class="print-size-label">Print label</div>
@@ -185,7 +191,6 @@
               hx-indicator="#print-spinner">Large</button>
     </div>
   </div>
-  {% endif %}
   {% endif %}
 
   <div class="part-ext-links">
