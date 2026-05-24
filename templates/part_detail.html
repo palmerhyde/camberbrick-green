@@ -31,11 +31,12 @@
   </div>
 
   <div class="part-hero">
-    {% if is_uncategorised and img_url %}
+    {% if is_uncategorised and img_url and not alt_part_id %}
     <img class="part-hero-img" src="{{ img_url }}" alt="{{ name }}">
     {% else %}
+    {% set ba_img_id = alt_part_id if alt_part_id else part_id %}
     <img class="part-hero-img"
-         src="https://brickarchitect.com/content/parts-large/{{ part_id }}.png"
+         src="https://brickarchitect.com/content/parts-large/{{ ba_img_id }}.png"
          alt="{{ name }}"
          onerror="this.src='{{ img_url or '' }}';this.onerror=null">
     {% endif %}

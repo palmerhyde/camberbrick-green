@@ -23,16 +23,23 @@ templates = Jinja2Templates(directory="templates")
 REBRICKABLE_BASE = "https://rebrickable.com/api/v3/lego/parts"
 
 
-async def get_brickarchitect_info(part_id: str) -> tuple[str, str]:
-    """Scrape name and category breadcrumb from BrickArchitect. Returns (name, category)."""
+async def get_brickarchitect_info(part_id: str) -> tuple[str, str, str]:
+    """Scrape name, category, and canonical ID from BrickArchitect.
+
+    Returns (name, category, canonical_id) where canonical_id is the final
+    part ID after any redirect (empty string if no redirect occurred).
+    """
     try:
         async with httpx.AsyncClient(timeout=10) as client:
             res = await client.get(f"https://brickarchitect.com/parts/{part_id}",
                                    follow_redirects=True)
         if res.status_code != 200:
-            return "", ""
+            return "", "", ""
+        # Capture redirect target (e.g. 88492c00 → 64022)
+        final_id = str(res.url).rstrip("/").split("/")[-1]
+        canonical_id = final_id if final_id != part_id else ""
         html = res.text
-        # Name: first <h1> — strip the "(Part XXXXXX)" span
+        # Name: first <h1>
         name = ""
         h1_match = re.search(r'<h1>([^<]+)', html)
         if h1_match:
@@ -44,14 +51,14 @@ async def get_brickarchitect_info(part_id: str) -> tuple[str, str]:
             anchors = re.findall(r'<a[^>]*>([^<]+)</a>', nav_match.group(1))
             if len(anchors) > 1:
                 category = " › ".join(a.strip() for a in anchors[1:])
-        return name, category
+        return name, category, canonical_id
     except Exception:
-        return "", ""
+        return "", "", ""
 
 
 async def get_brickarchitect_category(part_id: str) -> str:
     """Scrape the category breadcrumb from BrickArchitect."""
-    _, category = await get_brickarchitect_info(part_id)
+    _, category, _ = await get_brickarchitect_info(part_id)
     return category
 
 
@@ -107,23 +114,32 @@ async def part_detail(request: Request, part_id: str):
     need_ba = not cached_name or (not cached_cat and cached_rb_cat is None)
     called_rb = False
 
+    ba_canonical = ""  # canonical BA part ID if a redirect was followed
+
     if not need_rb and not need_ba:
         rb, ba_name, ba_cat = {}, "", ""
     elif need_rb and need_ba:
-        rb, (ba_name, ba_cat) = await asyncio.gather(
+        rb_result, ba_result = await asyncio.gather(
             _fetch_rebrickable(part_id),
             get_brickarchitect_info(part_id),
         )
+        rb = rb_result
+        ba_name, ba_cat, ba_canonical = ba_result
         called_rb = True
     elif need_rb:
         rb, ba_name, ba_cat = await _fetch_rebrickable(part_id), "", ""
         called_rb = True
     else:
-        rb, ba_name, ba_cat = {}, *await get_brickarchitect_info(part_id)
+        ba_name, ba_cat, ba_canonical = await get_brickarchitect_info(part_id)
+        rb = {}
 
     # If primary BA lookup found nothing and we have an alt ID, try that
     if not ba_cat and not cached_cat and alt_part_id:
-        _, ba_cat = await get_brickarchitect_info(alt_part_id)
+        _, ba_cat, _ = await get_brickarchitect_info(alt_part_id)
+
+    # Auto-populate alt_part_id when BA redirected to a canonical ID we didn't know about
+    if ba_canonical and not alt_part_id:
+        alt_part_id = ba_canonical
 
     # Prefer BA name (user-friendly) → stored name → Rebrickable name
     name        = cached_name or ba_name or rb.get("name") or part_id
@@ -132,7 +148,7 @@ async def part_detail(request: Request, part_id: str):
     rb_category = cached_rb_cat if cached_rb_cat is not None else rb.get("rb_category", "")
 
     # Cache img_url, BA name, RB category, full BA category string, and category assignment into DB
-    if called_rb or img_url or ba_name or ba_cat:
+    if called_rb or img_url or ba_name or ba_cat or ba_canonical:
         try:
             conn2 = get_db()
             if img_url and not (part or {}).get("img_url"):
@@ -150,6 +166,11 @@ async def part_detail(request: Request, part_id: str):
                 conn2.execute(
                     "UPDATE parts SET ba_category = ? WHERE part_id = ?",
                     (ba_cat, part_id)
+                )
+            if ba_canonical and not (part or {}).get("alt_part_id"):
+                conn2.execute(
+                    "UPDATE parts SET alt_part_id = ? WHERE part_id = ?",
+                    (ba_canonical, part_id)
                 )
             if called_rb and cached_rb_cat is None:
                 # Always store result (even "" for not-found) so we don't retry

@@ -253,7 +253,7 @@ async def print_label(
     # instead of the Brickognize name "Minifigure, Headgear Helmet SW Royal Guard")
     if alt_id:
         try:
-            ba_name, _ = await get_brickarchitect_info(alt_id)
+            ba_name, _, _ = await get_brickarchitect_info(alt_id)
             if ba_name:
                 part_name = ba_name
         except Exception:
