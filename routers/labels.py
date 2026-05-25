@@ -249,47 +249,44 @@ async def print_label(
         img_url = None
         part_name = part_id
 
-    # If there's an alt ID, prefer the BA name for it (e.g. "Helmet Mask. Royal Guards"
-    # instead of the Brickognize name "Minifigure, Headgear Helmet SW Royal Guard")
-    if alt_id:
-        try:
-            ba_name, _, _ = await get_brickarchitect_info(alt_id)
-            if ba_name:
-                part_name = ba_name
-        except Exception:
-            pass
-
     def _ba_label_missing(r: httpx.Response) -> bool:
         return r.status_code != 200 or r.content[:5] == b"ERROR"
 
-    url = BA_LABEL_URL.format(part_id=part_id)
     try:
         async with httpx.AsyncClient(timeout=15) as client:
-            res = await client.get(url, follow_redirects=True)
+            # When we know the BA canonical ID, try it first — it's the most likely to
+            # have a real label with a clean short name (e.g. "Plume" instead of
+            # "Minifigure, Plume Feather Small"). Only fall back to the primary ID /
+            # redirect detection when no alt ID is known.
+            if alt_id:
+                res = await client.get(BA_LABEL_URL.format(part_id=alt_id), follow_redirects=True)
+            else:
+                res = await client.get(BA_LABEL_URL.format(part_id=part_id), follow_redirects=True)
 
-            # BA returns HTTP 200 with body "ERROR: Part image not found." for missing labels
             if _ba_label_missing(res):
-                # Try resolving a redirect canonical ID from the BA HTML page
+                # Try the other ID (primary or alt, whichever we haven't tried yet)
+                other_id = part_id if alt_id else None
+                if other_id:
+                    res = await client.get(BA_LABEL_URL.format(part_id=other_id), follow_redirects=True)
+
+            if _ba_label_missing(res):
+                # Last resort: detect redirect from the BA parts page and try that ID
                 page = await client.get(
                     f"https://brickarchitect.com/parts/{part_id}",
                     follow_redirects=True,
                 )
                 canonical = str(page.url).rstrip("/").split("/")[-1]
-                if canonical and canonical != part_id:
+                if canonical and canonical != part_id and canonical != alt_id:
                     res = await client.get(
                         BA_LABEL_URL.format(part_id=canonical),
                         follow_redirects=True,
                     )
 
-            # Still missing — try the stored alt_part_id
-            if _ba_label_missing(res) and alt_id:
-                res = await client.get(
-                    BA_LABEL_URL.format(part_id=alt_id),
-                    follow_redirects=True,
-                )
-
     except httpx.RequestError as exc:
         return _toast(request, f"Could not reach BrickArchitect. ({exc})", error=True)
+
+    # If we got a real BA label, use it as-is (it already has the right name and part ID)
+    # Only build a custom label (using the stored image + verbose name) as a last resort.
 
     if _ba_label_missing(res):
         # Last resort: generate a custom label from the stored part image
