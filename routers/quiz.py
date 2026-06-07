@@ -9,8 +9,10 @@ import random
 from pathlib import Path
 
 from fastapi import APIRouter, Form, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
+
+from database import get_db
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
@@ -33,6 +35,32 @@ def _normalise(s: str) -> str:
 
 
 # ── Pages ──────────────────────────────────────────────────────────────────────
+
+@router.get("/quiz/stats/{level}")
+async def quiz_stats_get(level: str):
+    conn = get_db()
+    try:
+        row = conn.execute("SELECT high_streak FROM quiz_stats WHERE level = ?", (level,)).fetchone()
+        return JSONResponse({"high_streak": row["high_streak"] if row else 0})
+    finally:
+        conn.close()
+
+
+@router.post("/quiz/stats/{level}")
+async def quiz_stats_save(level: str, high_streak: int = Form(...)):
+    conn = get_db()
+    try:
+        conn.execute("""
+            INSERT INTO quiz_stats (level, high_streak) VALUES (?, ?)
+            ON CONFLICT(level) DO UPDATE SET high_streak = excluded.high_streak
+            WHERE excluded.high_streak > quiz_stats.high_streak
+        """, (level, high_streak))
+        conn.commit()
+        row = conn.execute("SELECT high_streak FROM quiz_stats WHERE level = ?", (level,)).fetchone()
+        return JSONResponse({"high_streak": row["high_streak"]})
+    finally:
+        conn.close()
+
 
 @router.get("/quiz", response_class=HTMLResponse)
 async def quiz_home(request: Request):

@@ -78,6 +78,11 @@ def init_db() -> None:
             notes       TEXT,
             PRIMARY KEY (part_id, location_id)
         );
+
+        CREATE TABLE IF NOT EXISTS quiz_stats (
+            level       TEXT PRIMARY KEY,
+            high_streak INTEGER DEFAULT 0
+        );
     """)
 
     # Migrate locations table if storage_type_id column is missing

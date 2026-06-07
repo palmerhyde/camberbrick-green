@@ -56,10 +56,25 @@
     document.getElementById('streak-high').textContent = highStreak;
   }
 
+  async function loadHighStreak(level) {
+    const res = await fetch('/quiz/stats/' + level);
+    const data = await res.json();
+    highStreak = data.high_streak;
+    updateStreakDisplay();
+  }
+
+  async function saveHighStreak(level, value) {
+    const body = new FormData();
+    body.append('high_streak', value);
+    await fetch('/quiz/stats/' + level, { method: 'POST', body });
+  }
+
   function setLevel(level, btn) {
     currentLevel = level;
+    streak = 0;
     document.querySelectorAll('.quiz-level-tab').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
+    loadHighStreak(level);
     loadCard();
   }
 
@@ -69,15 +84,21 @@
               {target: '#quiz-area', swap: 'innerHTML'});
   }
 
-  function nextCard(correct) {
+  async function nextCard(correct) {
     if (correct) {
       streak++;
-      if (streak > highStreak) highStreak = streak;
+      if (streak > highStreak) {
+        highStreak = streak;
+        await saveHighStreak(currentLevel, highStreak);
+      }
     } else {
       streak = 0;
     }
     updateStreakDisplay();
     loadCard();
   }
+
+  // Load saved high streak on page open
+  loadHighStreak(currentLevel);
 </script>
 {% endblock %}
