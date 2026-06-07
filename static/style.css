@@ -53,10 +53,10 @@ button, input, select, textarea { font-family: inherit; }
 }
 .site-header-links {
   display: flex;
-  gap: 16px;
+  gap: 10px;
 }
 .site-header-link {
-  font-size: 12px;
+  font-size: 11px;
   color: #888;
   text-decoration: none;
 }
