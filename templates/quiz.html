@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Parts Quiz — Camberbrick Green{% endblock %}
+
+{% block content %}
+<div class="screen">
+  <header class="site-header">
+    <span class="site-name">
+      <svg class="roundel" viewBox="0 0 15 15" fill="none"><circle cx="7.5" cy="7.5" r="7.5" fill="#2d6a2d"/></svg>
+      Camberbrick Green
+    </span>
+    <nav class="site-header-links">
+      <a class="site-header-link" href="/">Home</a>
+    </nav>
+  </header>
+
+  <div class="quiz-shell">
+
+    <!-- Top bar: level tabs + streak -->
+    <div class="quiz-top-bar">
+      <div class="quiz-level-tabs" id="level-tabs">
+        <button class="quiz-level-tab active" data-level="easy"   onclick="setLevel('easy',   this)">Easy</button>
+        <button class="quiz-level-tab"        data-level="medium" onclick="setLevel('medium', this)">Medium</button>
+        <button class="quiz-level-tab"        data-level="hard"   onclick="setLevel('hard',   this)">Hard</button>
+      </div>
+      <div class="quiz-streak-box">
+        <div class="quiz-streak-item">
+          <span class="quiz-streak-val" id="streak-current">0</span>
+          <span class="quiz-streak-lbl">Streak</span>
+        </div>
+        <div class="quiz-streak-divider"></div>
+        <div class="quiz-streak-item">
+          <span class="quiz-streak-val" id="streak-high">0</span>
+          <span class="quiz-streak-lbl">Best</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card area — HTMX swaps content here -->
+    <div id="quiz-area"
+         hx-get="/quiz/card?level=easy"
+         hx-trigger="load"
+         hx-target="#quiz-area"
+         hx-swap="innerHTML">
+      <div class="quiz-loading">Loading…</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let currentLevel = 'easy';
+  let streak = 0;
+  let highStreak = 0;
+
+  function updateStreakDisplay() {
+    document.getElementById('streak-current').textContent = streak;
+    document.getElementById('streak-high').textContent = highStreak;
+  }
+
+  function setLevel(level, btn) {
+    currentLevel = level;
+    document.querySelectorAll('.quiz-level-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    loadCard();
+  }
+
+  function loadCard() {
+    const excludeId = document.getElementById('current-part-id')?.value || '';
+    htmx.ajax('GET', '/quiz/card?level=' + currentLevel + '&exclude=' + excludeId,
+              {target: '#quiz-area', swap: 'innerHTML'});
+  }
+
+  function nextCard(correct) {
+    if (correct) {
+      streak++;
+      if (streak > highStreak) highStreak = streak;
+    } else {
+      streak = 0;
+    }
+    updateStreakDisplay();
+    loadCard();
+  }
+</script>
+{% endblock %}

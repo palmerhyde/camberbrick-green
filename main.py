@@ -12,7 +12,7 @@ from fastapi.templating import Jinja2Templates
 from contextlib import asynccontextmanager
 
 from database import init_db, get_all_part_ids, get_db
-from routers import identify, parts, collection, lookup, storage, library, labels, minifigures, category_labels
+from routers import identify, parts, collection, lookup, storage, library, labels, minifigures, category_labels, quiz
 from routers.parts import get_brickarchitect_info
 
 
@@ -21,7 +21,7 @@ async def _backfill_ba_info():
     await asyncio.sleep(2)  # let the server finish starting
     part_ids = get_all_part_ids()
     for part_id in part_ids:
-        ba_name, ba_cat = await get_brickarchitect_info(part_id)
+        ba_name, ba_cat, _ = await get_brickarchitect_info(part_id)
         if not ba_name and not ba_cat:
             await asyncio.sleep(0.5)
             continue
@@ -81,6 +81,7 @@ app.include_router(library.router)
 app.include_router(labels.router)
 app.include_router(minifigures.router)
 app.include_router(category_labels.router)
+app.include_router(quiz.router)
 
 
 # ── Page routes ────────────────────────────────────────────────────────────────

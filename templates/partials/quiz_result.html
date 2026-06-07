@@ -1,0 +1,28 @@
+<input type="hidden" id="current-part-id" value="{{ part.part_id }}">
+
+<div class="quiz-card">
+  <div class="quiz-img-wrap">
+    <img class="quiz-img" src="{{ part.img_url }}" alt="Part {{ part.part_id }}">
+  </div>
+  <div class="quiz-part-id">Part #{{ part.part_id }} — {{ part.name }}</div>
+
+  <div class="quiz-result {% if is_correct %}quiz-result--correct{% else %}quiz-result--wrong{% endif %}">
+    {% if is_correct %}
+      <div class="quiz-result-icon">✓</div>
+      <div class="quiz-result-label">Correct!</div>
+    {% else %}
+      <div class="quiz-result-icon">✗</div>
+      <div class="quiz-result-label">Not quite</div>
+      <div class="quiz-result-your">You said: <strong>{{ answer }}</strong></div>
+    {% endif %}
+    <div class="quiz-result-answer">{{ correct }}</div>
+  </div>
+
+  <div class="quiz-result-meta">
+    <a class="quiz-result-ba-link" href="https://brickarchitect.com/parts/{{ part.part_id }}" target="_blank">
+      View on Brick Architect ↗
+    </a>
+  </div>
+
+  <button class="quiz-submit quiz-next-btn" onclick="nextCard()">Next Part →</button>
+</div>

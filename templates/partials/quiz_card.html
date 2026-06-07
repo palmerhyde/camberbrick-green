@@ -1,0 +1,17 @@
+<input type="hidden" id="current-part-id" value="{{ part.part_id }}">
+
+<div class="quiz-card">
+  <div class="quiz-img-wrap">
+    <img class="quiz-img" src="{{ part.img_url }}" alt="Part {{ part.part_id }}">
+  </div>
+  <div class="quiz-part-id">Part #{{ part.part_id }}</div>
+
+  <p class="quiz-think-prompt">What category is this part in?</p>
+
+  <button class="quiz-submit"
+          hx-get="/quiz/reveal?part_id={{ part.part_id }}&level={{ level }}"
+          hx-target="#quiz-area"
+          hx-swap="innerHTML">
+    Reveal Answer
+  </button>
+</div>

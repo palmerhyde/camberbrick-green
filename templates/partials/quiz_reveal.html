@@ -1,0 +1,20 @@
+<input type="hidden" id="current-part-id" value="{{ part.part_id }}">
+
+<div class="quiz-card">
+  <div class="quiz-img-wrap">
+    <img class="quiz-img" src="{{ part.img_url }}" alt="Part {{ part.part_id }}">
+  </div>
+  <div class="quiz-part-id">Part #{{ part.part_id }} — {{ part.name }}</div>
+
+  <div class="quiz-answer-reveal">
+    <div class="quiz-answer-label">Answer</div>
+    <div class="quiz-answer-text">{{ correct }}</div>
+  </div>
+
+  <p class="quiz-think-prompt">Did you get it right? &nbsp;<a class="quiz-result-ba-link" href="https://brickarchitect.com/parts/{{ part.part_id }}" target="_blank">BA ↗</a></p>
+
+  <div class="quiz-yn-buttons">
+    <button class="quiz-yn-btn quiz-yn-yes" onclick="nextCard(true)">✓ Yes</button>
+    <button class="quiz-yn-btn quiz-yn-no"  onclick="nextCard(false)">✗ No</button>
+  </div>
+</div>
