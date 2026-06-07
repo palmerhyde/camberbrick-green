@@ -4,8 +4,11 @@ Full-page part detail: merges local collection data with Rebrickable + BrickArch
 """
 
 import asyncio
+import json
 import os
 import re
+from pathlib import Path
+
 import httpx
 from fastapi import APIRouter, Form, Request
 from fastapi.templating import Jinja2Templates
@@ -22,13 +25,26 @@ templates = Jinja2Templates(directory="templates")
 
 REBRICKABLE_BASE = "https://rebrickable.com/api/v3/lego/parts"
 
+# ── Local BA cache (from quiz scrape) ─────────────────────────────────────────
+_quiz_data_path = Path(__file__).parent.parent / "data" / "quiz_parts.json"
+_BA_CACHE: dict[str, dict] = {
+    p["part_id"]: p
+    for p in json.loads(_quiz_data_path.read_text())
+} if _quiz_data_path.exists() else {}
+
 
 async def get_brickarchitect_info(part_id: str) -> tuple[str, str, str]:
-    """Scrape name, category, and canonical ID from BrickArchitect.
+    """Return (name, category, canonical_id) for a part.
 
-    Returns (name, category, canonical_id) where canonical_id is the final
-    part ID after any redirect (empty string if no redirect occurred).
+    Checks the local quiz cache first; only scrapes BA's site if the part
+    isn't in the cache (i.e. not in BA's top ~2,400 parts).
     """
+    cached = _BA_CACHE.get(part_id)
+    if cached:
+        # name is intentionally blank — the short BA display label (e.g. "1×2") is
+        # not a useful name; Rebrickable fills in the real name separately.
+        return "", cached.get("cat_l3", ""), ""
+
     try:
         async with httpx.AsyncClient(timeout=10) as client:
             res = await client.get(f"https://brickarchitect.com/parts/{part_id}",
