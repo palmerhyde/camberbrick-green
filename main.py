@@ -99,9 +99,9 @@ async def scan(request: Request):
             JOIN part_locations pl ON pl.part_id = p.part_id
             WHERE p.item_type = 'minifig'
         """).fetchone()[0]
-        locations_count = conn.execute(
-            "SELECT COUNT(*) FROM storage_types"
-        ).fetchone()[0]
+        quiz_best = conn.execute(
+            "SELECT MAX(high_streak) FROM quiz_stats"
+        ).fetchone()[0] or 0
 
         # Featured minifigure: most recently added if within 7 days,
         # otherwise a daily spotlight (changes each day, stable within a day)
@@ -159,7 +159,7 @@ async def scan(request: Request):
         "request":         request,
         "parts_count":     parts_count,
         "minifig_count":   minifig_count,
-        "locations_count": locations_count,
+        "quiz_best": quiz_best,
         "featured":        featured,
         "featured_label":  featured_label,
         "latest_part":       latest_part,
